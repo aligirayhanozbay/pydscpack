@@ -32,14 +32,14 @@ if __name__ == '__main__':
     tol = 1e-10 #tolerance for iterative process
     iguess = 1 #initial guess type. see line 770 is src.f - not sure what this does yet.
     ishape = 0 #0 for no vertices at infinity
-    linearc = 0
+    linearc = 1
 
-    # outer_coords = complexify(['1+j', '-1+j', '-1-j', '1-j']) #coordinates of the outer polygon
-    # inner_coords = complexify(['0.5', '-0.5+0.5j', '-0.5-0.5j']) #coordinates of the inner polygon
+    outer_coords = complexify(['1+j', '-1+j', '-1-j', '1-j']) #coordinates of the outer polygon
+    inner_coords = complexify(['0.5', '-0.5+0.5j', '-0.5-0.5j']) #coordinates of the inner polygon
 
-    q = np.sqrt(2)
-    outer_coords = (1+q) * complexify(['1+j', '-1+j', '-1-j', '1-j']) #coordinates of the outer polygon
-    inner_coords = complexify([f'{q}+0.0j', f'0.0+{q}j', f'-{q}+0.0j', f'0.0-{q}j']) #coordinates of the inner polygon
+    #q = np.sqrt(2)
+    #outer_coords = (1+q) * complexify(['1+j', '-1+j', '-1-j', '1-j']) #coordinates of the outer polygon
+    #inner_coords = complexify([f'{q}+0.0j', f'0.0+{q}j', f'-{q}+0.0j', f'0.0-{q}j']) #coordinates of the inner polygon
 
     alfa0 = dsc.angles(outer_coords, 0) #turning angles for the outer and inner polygon.
     alfa1 = dsc.angles(inner_coords, 1)
