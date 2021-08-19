@@ -33,8 +33,6 @@ if __name__ == '__main__':
     iguess = 1 #initial guess type. see line 770 is src.f - not sure what this does yet.
     ishape = 0 #0 for no vertices at infinity
     linearc = 0
-    u = 0.0 #some sort of parameter computed by the program
-    c = complex('0.0') #some sort of parameter computed by the program
 
     # outer_coords = complexify(['1+j', '-1+j', '-1-j', '1-j']) #coordinates of the outer polygon
     # inner_coords = complexify(['0.5', '-0.5+0.5j', '-0.5-0.5j']) #coordinates of the inner polygon
@@ -45,21 +43,12 @@ if __name__ == '__main__':
 
     test_pt = complex('1.50+0.0j')
 
-    alfa0 = np.zeros(outer_coords.shape, dtype = np.float64) #turning angles for the outer polygon. computed.
-    alfa1 = np.zeros(inner_coords.shape, dtype = np.float64) #turning angles for the inner polygon. computed.
-    w0 = np.zeros(outer_coords.shape, dtype = np.complex128) #w0, w1, phi0, phi1 are mapping params. computed.
-    w1 = np.zeros(inner_coords.shape, dtype = np.complex128)
-    phi0 = np.zeros(outer_coords.shape, dtype = np.float64)
-    phi1 = np.zeros(inner_coords.shape, dtype = np.float64)
-    qwork = np.zeros([nptq*(3+2*(outer_coords.shape[0] + inner_coords.shape[0]))], dtype = np.float64) #quadrature nodes
-    #qwork = np.zeros((1660,), dtype=np.float64)
-
-    dsc.angles(outer_coords, alfa0, 0)
-    dsc.angles(inner_coords, alfa1, 1)
-    dsc.qinit(alfa0, alfa1, nptq, qwork)
+    alfa0 = dsc.angles(outer_coords, 0) #turning angles for the outer and inner polygon.
+    alfa1 = dsc.angles(inner_coords, 1)
+    qwork = dsc.qinit(alfa0, alfa1, nptq) # quadrature nodes
     dsc.check(alfa0, alfa1, ishape)
 
-    u,c,w0,w1,phi0,phi1 = dsc.dscsolv(tol, iguess, outer_coords, inner_coords, alfa0, alfa1, nptq, qwork, ishape, linearc)
+    u,c,w0,w1,phi0,phi1 = dsc.dscsolv(tol, iguess, outer_coords, inner_coords, alfa0, alfa1, nptq, qwork, ishape, linearc) #mapping parameters
 
     # print('---------')
     # print(tol)
