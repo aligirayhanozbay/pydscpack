@@ -168,9 +168,7 @@ C     .. Local Params/Arrays ..
             WPLOT(I,J) = RADII(I)*CEXP(CMPLX(0,ARGUMENTS(J)))
             WNORM(I,J) = REAL(WPLOT(I,J) * CONJG(WPLOT(I,J)))
             ZPLOT(I,J) = ZDSC(WPLOT(I,J),0,2,M,N,U,C,W0,W1,Z0,Z1,ALFA0,
-     +                        ALFA1,PHI0,PHI1,NPTQ,QWORK,1)
-C            ZPLOT(I,J) = WDSC(WPLOT(I,J),M,N,U,C,W0,W1,Z0,Z1,ALFA0,
-C     +                        ALFA1,PHI0,PHI1,NPTQ,QWORK,EPS,1)
+     +           ALFA1,PHI0,PHI1,NPTQ,QWORK,1)
          END DO
       END DO
       

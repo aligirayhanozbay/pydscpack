@@ -41,51 +41,16 @@ if __name__ == '__main__':
     outer_coords = (1+q) * complexify(['1+j', '-1+j', '-1-j', '1-j']) #coordinates of the outer polygon
     inner_coords = complexify([f'{q}+0.0j', f'0.0+{q}j', f'-{q}+0.0j', f'0.0-{q}j']) #coordinates of the inner polygon
 
-    test_pt = complex('1.50+0.0j')
-
     alfa0 = dsc.angles(outer_coords, 0) #turning angles for the outer and inner polygon.
     alfa1 = dsc.angles(inner_coords, 1)
     qwork = dsc.qinit(alfa0, alfa1, nptq) # quadrature nodes
     dsc.check(alfa0, alfa1, ishape)
 
     u,c,w0,w1,phi0,phi1 = dsc.dscsolv(tol, iguess, outer_coords, inner_coords, alfa0, alfa1, nptq, qwork, ishape, linearc) #mapping parameters
-
-    # print('---------')
-    # print(tol)
-    # print('---------')
-    # print(iguess)
-    # print('---------')
-    # print(u)
-    # print('---------')
-    # print(c)
-    # print('---------')
-    # print(w0)
-    # print('---------')
-    # print(w1)
-    # print('---------')
-    # print(phi0)
-    # print('---------')
-    # print(phi1)
-    # print('---------')
-    # print(outer_coords)
-    # print('---------')
-    # print(inner_coords)
-    # print('---------')
-    # print(alfa0)
-    # print('---------')
-    # print(alfa1)
-    # print('---------')
-    # print(nptq)
-    # print('---------')
-    # print(qwork)
-    # print('---------')
-    # print(ishape)
-    # print('---------')
-    # print(linearc)
-
     dsc.thdata(u)
-    #print(u)
     dsc.dsctest(u,c,w0,w1,outer_coords,inner_coords,alfa0,alfa1,nptq,qwork)
+
+    test_pt = complex('1.50+0.0j')
     ww = dsc.wdsc(test_pt, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1e-6, 1)
     print(ww)
     zz = dsc.zdsc(ww, 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1)
@@ -94,9 +59,9 @@ if __name__ == '__main__':
     n_plotpts = (50,200)
     r = np.linspace(u,1.0-(1e-5),n_plotpts[0]) #important to not evaluate map at r=1.0 (outer annulus ring)
     theta = np.linspace(0,2*np.pi,n_plotpts[1])
-    c = np.exp(theta*1j)
+    a = np.exp(theta*1j)
     #import pdb; pdb.set_trace()
-    wplot = np.einsum('i,j->ij', r, c)
+    wplot = np.einsum('i,j->ij', r, a)
     wnorm = np.real(wplot * np.conj(wplot))
 
     zplot = np.zeros(wplot.shape, dtype=wplot.dtype)
@@ -104,9 +69,12 @@ if __name__ == '__main__':
         for j in range(wplot.shape[1]):
             zplot[i,j] = dsc.zdsc(wplot[i,j], 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1)
 
+    np.save('wplot.npy',wplot)
+    np.save('zplot.npy',zplot)
     unstructured_plot(wplot, f=wnorm, plotname='/tmp/annulus.png')
     unstructured_plot(zplot, outer_coords, inner_coords, f=wnorm, plotname='/tmp/z.png')
 
+    #import pdb; pdb.set_trace()
     #print(alfa0)
     #print(alfa1)
     #print(qwork)
