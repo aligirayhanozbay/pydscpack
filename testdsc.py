@@ -1,6 +1,7 @@
 import dsc
 import numpy as np
 import matplotlib.pyplot as plt
+import multiprocessing
 #python3 -m numpy.f2py -c Src/Dp/src.f -m dsc
 
 def complexify(x):
@@ -25,6 +26,30 @@ def unstructured_plot(w, *obj_boundaries, f=None, plotname = './plot.png'):
     plt.colorbar()
     plt.savefig(plotname)
     plt.close()
+
+def wrap_zdsc(indices, queue, ww, kww, ic, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, iopt):
+    for idx, w in zip(indices,ww): 
+        z = dsc.zdsc(w, kww, ic, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, iopt)
+        queue.put((idx, z))
+
+def map_zdsc(ww, kww, ic, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, iopt):
+    processes = []
+    queue = multiprocessing.Queue()
+    indices = np.arange(ww.shape[0])
+    ww_split = np.array_split(ww,multiprocessing.cpu_count())
+    indices_split = np.array_split(indices,multiprocessing.cpu_count())
+    zz = np.zeros(ww.shape, dtype=ww.dtype)
+    for wwidx,w in zip(indices_split,ww_split):
+        p = multiprocessing.Process(target=wrap_zdsc, args=(wwidx, queue, w, kww, ic, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, iopt))
+        processes.append(p)
+        p.start()
+    for k in range(zz.shape[0]):
+        wwidx, z = queue.get()
+        zz[wwidx] = z
+    for p in processes:
+        p.join()
+        p.close()
+    return zz
 
 if __name__ == '__main__':
 
@@ -63,11 +88,8 @@ if __name__ == '__main__':
     #import pdb; pdb.set_trace()
     wplot = np.einsum('i,j->ij', r, a)
     wnorm = np.real(wplot * np.conj(wplot))
-
-    zplot = np.zeros(wplot.shape, dtype=wplot.dtype)
-    for i in range(wplot.shape[0]):
-        for j in range(wplot.shape[1]):
-            zplot[i,j] = dsc.zdsc(wplot[i,j], 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1)
+    
+    zplot = map_zdsc(wplot.reshape(-1), 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1).reshape(wplot.shape)
 
     np.save('wplot.npy',wplot)
     np.save('zplot.npy',zplot)
