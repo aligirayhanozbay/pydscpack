@@ -1495,12 +1495,12 @@ C     ..
 C     .. Intrinsic Functions ..
       INTRINSIC ABS
 C     ..
-      IF (M.GE.3 .AND. M.LE.30 .AND. N.LE.30 .AND.
-     +    M+N.LE.40) GO TO 10
-      WRITE (6,FMT=*) '***WARNING: M MUST BE NO LESS THEN 3'
-      WRITE (6,FMT=*) '*********** N , M MUST BE NO GREATER THAN 30'
-      WRITE (6,FMT=*) '*********** M+N MUST BE NO GREATER THAN 40'
-      STOP
+c      IF (M.GE.3 .AND. M.LE.30 .AND. N.LE.30 .AND.
+c     +    M+N.LE.40) GO TO 10
+c      WRITE (6,FMT=*) '***WARNING: M MUST BE NO LESS THEN 3'
+c      WRITE (6,FMT=*) '*********** N , M MUST BE NO GREATER THAN 30'
+c      WRITE (6,FMT=*) '*********** M+N MUST BE NO GREATER THAN 40'
+c      STOP
 
    10 EPS = 0.00001D0
       SUM = 0.D0

@@ -381,6 +381,20 @@ C
           Z1(1) = (0.D0,0.D0)
           Z1(2) = (-1.D0,0.D0)
 
+      ELSE IF (IPOLY.EQ.99) THEN
+      	  M = 4
+          N = 5
+          Q = SQRT(2.D0)
+          Z0(1) = DCMPLX(1.D0+Q,1.D0+Q)
+          Z0(2) = DCMPLX(-1.D0-Q,1.D0+Q)
+          Z0(3) = DCMPLX(-1.D0-Q,-1.D0-Q)
+          Z0(4) = DCMPLX(1.D0+Q,-1.D0-Q)
+          Z1(1) = DCMPLX(Q,0.D0)
+          Z1(2) = DCMPLX(0.D0,Q)
+          Z1(3) = DCMPLX(-Q,0.D0)
+          Z1(4) = DCMPLX(Q,-Q)
+          Z1(5) = DCMPLX(0.D0,-Q)
+
       ELSE
           M = 3
           N = 2
