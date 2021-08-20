@@ -36,8 +36,9 @@ def map_zdsc(ww, kww, ic, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, 
     processes = []
     queue = multiprocessing.Queue()
     indices = np.arange(ww.shape[0])
-    ww_split = np.array_split(ww,multiprocessing.cpu_count())
-    indices_split = np.array_split(indices,multiprocessing.cpu_count())
+    nprocs = min(multiprocessing.cpu_count(), ww.shape[0])
+    ww_split = np.array_split(ww,nproc)
+    indices_split = np.array_split(indices,nproc)
     zz = np.zeros(ww.shape, dtype=ww.dtype)
     for wwidx,w in zip(indices_split,ww_split):
         p = multiprocessing.Process(target=wrap_zdsc, args=(wwidx, queue, w, kww, ic, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, iopt))
