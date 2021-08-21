@@ -581,7 +581,8 @@ C     ..
 
       END
 C    --------------------------------------
-      SUBROUTINE DSCFUN(NDIM,X,FVAL,IFLAG)
+      SUBROUTINE DSCFUN(M,N,NPTQ,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+     +              PHI1,QWORK,NDIM,X,FVAL,IFLAG)
 C    --------------------------------------
 C  FORMS THE NONLINEAR SYSTEM SATISFIED BY D-SC PARAMETERS.THE
 C  SUBROUTINE WILL BE CALLED BY NONLINEAR SYSTEM SOLVER HYBRD.
@@ -610,9 +611,9 @@ C     .. Scalars in Common ..
       INTEGER ICOUNT,ISHAPE,ISPRT,IU,LINEARC,M,N,NPTQ,NSHAPE
 C     ..
 C     .. Arrays in Common ..
-      DOUBLE COMPLEX W0(30),W1(30),Z0(30),Z1(30)
-      DOUBLE PRECISION ALFA0(30),ALFA1(30),PHI0(30),PHI1(30),
-     +                 QWORK(1660),UARY(8),VARY(3)
+      DOUBLE COMPLEX W0(M),W1(N),Z0(M),Z1(N)
+      DOUBLE PRECISION ALFA0(M),ALFA1(N),PHI0(M),PHI1(N),
+     +                 QWORK(NPTQ* (2* (N+M)+3)),UARY(8),VARY(3)
       INTEGER IND(20)
 C     ..
 C     .. Local Scalars ..
@@ -633,12 +634,32 @@ C     .. Intrinsic Functions ..
       INTRINSIC ABS,COS,DCMPLX,DIMAG,EXP
 C     ..
 C     .. Common blocks ..
-      COMMON /PARAM1/W0,W1,Z0,Z1,C
-      COMMON /PARAM2/U,PHI0,PHI1,ALFA0,ALFA1,QWORK
-      COMMON /PARAM3/M,N,NPTQ,ISHAPE,LINEARC,NSHAPE,IND
+c      COMMON /PARAM1/W0,W1,Z0,Z1,C
+c      COMMON /PARAM2/U,PHI0,PHI1,ALFA0,ALFA1,QWORK
+c      COMMON /PARAM3/M,N,NPTQ,ISHAPE,LINEARC,NSHAPE,IND
       COMMON /PARAM4/UARY,VARY,DLAM,IU
       COMMON /PARAM5/ISPRT,ICOUNT
 C     ..
+c$$$      WRITE (6,FMT=*) '---------'
+c$$$      WRITE (6,FMT=*) 'DSCFUN CALLED'
+c$$$      WRITE (6,FMT=*) '---------'
+c$$$      WRITE (6,FMT=*) W0
+c$$$      WRITE (6,FMT=*) '---------'
+c$$$      WRITE (6,FMT=*) W1
+c$$$      WRITE (6,FMT=*) '---------'
+c$$$      WRITE (6,FMT=*) Z0
+c$$$      WRITE (6,FMT=*) '---------'
+c$$$      WRITE (6,FMT=*) Z1
+c$$$      WRITE (6,FMT=*) '---------'
+c$$$      WRITE (6,FMT=*) C
+c$$$      WRITE (6,FMT=*) '---------'
+c$$$      WRITE (6,FMT=*) U
+c$$$      WRITE (6,FMT=*) '---------'
+c$$$      WRITE (6,FMT=*) PHI0
+c$$$      WRITE (6,FMT=*) '---------'
+c$$$      WRITE (6,FMT=*) PHI1
+c$$$      WRITE (6,FMT=*) '---------'
+c$$$      WRITE (6,FMT=*) QWORK
       CALL XWTRAN(M,N,X,U,C,W0,W1,PHI0,PHI1)
       CALL THDATA(U)
       ZI = (0.D0,1.D0)
@@ -754,7 +775,7 @@ C  CALCULATE THE MAXIMUM-NORM OF THE FUNCTION FVAL:
       IF (ISPRT.NE.1) GO TO 110
       FMAXN = FMAX(NDIM,FVAL)
       WRITE (6,FMT=9020) ICOUNT,FMAXN
-  110 CONTINUE
+ 110  CONTINUE
       RETURN
 
  9000 FORMAT (2X,I5,6X,E10.4)
@@ -815,10 +836,10 @@ C     .. Scalars in Common ..
       INTEGER ICOUNT,ISHAPE2,ISPRT,IU,LINEARC2,M2,N2,NPTQ2,NSHAPE
 C     ..
 C     .. Arrays in Common ..
-      DOUBLE COMPLEX W02(30),W12(30),Z02(30),Z12(30)
-      DOUBLE PRECISION ALFA02(30),ALFA12(30),PHI02(30),PHI12(30),
-     +                 QWORK2(1660),UARY(8),VARY(3)
-
+C      DOUBLE COMPLEX W02(30),W12(30),Z02(30),Z12(30)
+C      DOUBLE PRECISION ALFA02(30),ALFA12(30),PHI02(30),PHI12(30),
+C     +                 QWORK2(1660),UARY(8),VARY(3)
+      DOUBLE PRECISION UARY(8), VARY(3)
       INTEGER IND(20)
 C     ..
 C     .. Local Scalars ..
@@ -840,9 +861,9 @@ C     .. Intrinsic Functions ..
       INTRINSIC ACOS,DBLE,DIMAG,LOG
 C     ..
 C     .. Common blocks ..
-      COMMON /PARAM1/W02,W12,Z02,Z12,C2
-      COMMON /PARAM2/U2,PHI02,PHI12,ALFA02,ALFA12,QWORK2
-      COMMON /PARAM3/M2,N2,NPTQ2,ISHAPE2,LINEARC2,NSHAPE,IND
+c      COMMON /PARAM1/W02,W12,Z02,Z12,C2
+c      COMMON /PARAM2/U2,PHI02,PHI12,ALFA02,ALFA12,QWORK2
+c      COMMON /PARAM3/M2,N2,NPTQ2,ISHAPE2,LINEARC2,NSHAPE,IND
       COMMON /PARAM4/UARY,VARY,DLAM,IU
       COMMON /PARAM5/ISPRT,ICOUNT
 C     ..
@@ -940,27 +961,27 @@ C  HYBRD CONTROL PARAMETERS:
       NM = M + N + 2
 C
 C  COPY RELEVANT DATA TO THE COMMON BLOCK IN DSCFUN:
-      M2 = M
-      N2 = N
-      ISHAPE2 = ISHAPE
-      LINEARC2 = LINEARC
-      NPTQ2 = NPTQ
-      DO 90 K = 1,M
-          W02(K) = W0(K)
-          PHI02(K) = PHI0(K)
-          Z02(K) = Z0(K)
-          ALFA02(K) = ALFA0(K)
-   90 CONTINUE
-      DO 100 K = 1,N
-          W12(K) = W1(K)
-          PHI12(K) = PHI1(K)
-          Z12(K) = Z1(K)
-          ALFA12(K) = ALFA1(K)
-  100 CONTINUE
-      NWDIM = NPTQ* (2* (M+N)+3)
-      DO 110 I = 1,NWDIM
-          QWORK2(I) = QWORK(I)
-  110 CONTINUE
+c$$$      M2 = M
+c$$$      N2 = N
+c$$$      ISHAPE2 = ISHAPE
+c$$$      LINEARC2 = LINEARC
+c$$$      NPTQ2 = NPTQ
+c$$$      DO 90 K = 1,M
+c$$$          W02(K) = W0(K)
+c$$$          PHI02(K) = PHI0(K)
+c$$$          Z02(K) = Z0(K)
+c$$$          ALFA02(K) = ALFA0(K)
+c$$$   90 CONTINUE
+c$$$      DO 100 K = 1,N
+c$$$          W12(K) = W1(K)
+c$$$          PHI12(K) = PHI1(K)
+c$$$          Z12(K) = Z1(K)
+c$$$          ALFA12(K) = ALFA1(K)
+c$$$  100 CONTINUE
+c$$$      NWDIM = NPTQ* (2* (M+N)+3)
+c$$$      DO 110 I = 1,NWDIM
+c$$$          QWORK2(I) = QWORK(I)
+c$$$  110 CONTINUE
 C
 C  CHOOSE SCREEN DISPLAY:
       ISPRT = 2
@@ -980,9 +1001,10 @@ C  CHOOSE SCREEN DISPLAY:
       END IF
 C
 C  SOLVE NONLINEAR SYSTEM WITH HYBRD:
-      CALL HYBRD(DSCFUN,NM,X,FVAL,TOL,MAXFUN,NM,NM,DSTEP,DIAG,1,FACTOR,
-     +           -1,INFO,NFEV,FJAC,42,QW(1),903,QW(904),QW(946),QW(988),
-     +           QW(1030),QW(1072))
+      CALL HYBRD(M,N,NPTQ,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+     +     PHI1,QWORK,DSCFUN,NM,X,FVAL,TOL,MAXFUN,NM,NM,
+     +     DSTEP,DIAG,1,FACTOR,-1,INFO,NFEV,FJAC,42,QW(1),903,
+     +     QW(904),QW(946),QW(988),QW(1030),QW(1072))
 C
 C  CHECK ERROR INFORMATION. THE DESCRIPTION OF INFO CAN BE
 C  FOUND IN THE DOCUMENTATION OF HYBRD.(INFO=1: SECCESSFUL EXIT)
@@ -1714,8 +1736,9 @@ C     ..
       END
 C---------------------------------------------------------------------
 C---------------------------------------------------------------------
-      SUBROUTINE HYBRD(FCN,N,X,FVEC,XTOL,MAXFEV,ML,MU,EPSFCN,DIAG,MODE,
-     +                 FACTOR,NPRINT,INFO,NFEV,FJAC,LDFJAC,R,LR,QTF,WA1,
+      SUBROUTINE HYBRD(MD,ND,NPTQ,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+     +     PHI1,QWORK,FCN,N,X,FVEC,XTOL,MAXFEV,ML,MU,EPSFCN,
+     +     DIAG,MODE,FACTOR,NPRINT,INFO,NFEV,FJAC,LDFJAC,R,LR,QTF,WA1,
      +                 WA2,WA3,WA4)
 C     ***********
 C
@@ -1873,13 +1896,20 @@ C     ARGONNE NATIONAL LABORATORY. MINPACK PROJECT. MARCH 1980.
 C     BURTON S. GARBOW, KENNETH E. HILLSTROM, JORGE J. MORE
 C
 C     **********
+C     DEBUG
+      DOUBLE PRECISION UARY(8), VARY(3), DLAM
+      INTEGER IU
+      COMMON /PARAM4/UARY,VARY,DLAM,IU
+      COMMON /PARAM5/ISPRT,ICOUNT
 C     .. Scalar Arguments ..
       DOUBLE PRECISION EPSFCN,FACTOR,XTOL
-      INTEGER INFO,LDFJAC,LR,MAXFEV,ML,MODE,MU,N,NFEV,NPRINT
+      INTEGER INFO,LDFJAC,LR,MAXFEV,ML,MODE,MU,N,NFEV,NPRINT,MD,ND,NPTQ
 C     ..
 C     .. Array Arguments ..
       DOUBLE PRECISION DIAG(N),FJAC(LDFJAC,N),FVEC(N),QTF(N),R(LR),
-     +                 WA1(N),WA2(N),WA3(N),WA4(N),X(N)
+     +     WA1(N),WA2(N),WA3(N),WA4(N),X(N), ALFA0(MD), ALFA1(ND),
+     +     PHI0(MD), PHI1(ND), QWORK(NPTQ* (2* (ND+MD)+3))
+      DOUBLE COMPLEX, INTENT(IN) :: W0(MD), W1(ND), Z0(MD), Z1(ND)
 C     ..
 C     .. Subroutine Arguments ..
       EXTERNAL FCN
@@ -1907,6 +1937,8 @@ C     .. Data statements ..
 C
       DATA ONE/1.0D0/
       DATA P1,P5,P001,P0001,ZERO/1.0D-1,5.0D-1,1.0D-3,1.0D-4,0.0D0/
+
+      
 C     ..
 C
 C     EPSMCH IS THE MACHINE PRECISION.
@@ -1932,7 +1964,8 @@ C     EVALUATE THE FUNCTION AT THE STARTING POINT
 C     AND CALCULATE ITS NORM.
 C
       IFLAG = 1
-      CALL FCN(N,X,FVEC,IFLAG)
+      CALL FCN(MD,ND,NPTQ,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+     +     PHI1,QWORK,N,X,FVEC,IFLAG)
       NFEV = 1
       IF (IFLAG.LT.0) GO TO 300
       FNORM = ENORM(N,FVEC)
@@ -1958,7 +1991,9 @@ C
 C        CALCULATE THE JACOBIAN MATRIX.
 C
       IFLAG = 2
-      CALL FDJAC1(FCN,N,X,FVEC,FJAC,LDFJAC,IFLAG,ML,MU,EPSFCN,WA1,WA2)
+      CALL FDJAC1(MD,ND,NPTQ,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,QWORK,FCN
+     +                ,N,X,FVEC,FJAC,LDFJAC,IFLAG,ML,MU,EPSFCN,WA1,WA2)
+      WRITE(6,FMT=*) 'YAY2'
       NFEV = NFEV + MSUM
       IF (IFLAG.LT.0) GO TO 300
 C
@@ -2042,7 +2077,9 @@ C           IF REQUESTED, CALL FCN TO ENABLE PRINTING OF ITERATES.
 C
       IF (NPRINT.LE.0) GO TO 190
       IFLAG = 0
-      IF (MOD(ITER-1,NPRINT).EQ.0) CALL FCN(N,X,FVEC,IFLAG)
+      IF (MOD(ITER-1,NPRINT).EQ.0) CALL FCN(MD,ND,NPTQ,W0,W1,Z0,Z1,ALFA0
+     +     ,ALFA1,PHI0,PHI1,QWORK,N,X,FVEC,IFLAG)
+      
       IF (IFLAG.LT.0) GO TO 300
   190 CONTINUE
 C
@@ -2066,7 +2103,8 @@ C
 C           EVALUATE THE FUNCTION AT X + P AND CALCULATE ITS NORM.
 C
       IFLAG = 1
-      CALL FCN(N,WA2,WA4,IFLAG)
+      CALL FCN(MD,ND,NPTQ,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+     +     PHI1,QWORK,N,WA2,WA4,IFLAG)
       NFEV = NFEV + 1
       IF (IFLAG.LT.0) GO TO 300
       FNORM1 = ENORM(N,WA4)
@@ -2189,7 +2227,8 @@ C     TERMINATION, EITHER NORMAL OR USER IMPOSED.
 C
       IF (IFLAG.LT.0) INFO = IFLAG
       IFLAG = 0
-      IF (NPRINT.GT.0) CALL FCN(N,X,FVEC,IFLAG)
+      IF (NPRINT.GT.0) CALL FCN(MD,ND,NPTQ,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+     +     PHI1,QWORK,N,X,FVEC,IFLAG)
       RETURN
 C
 C     LAST CARD OF SUBROUTINE HYBRD.
@@ -2707,8 +2746,9 @@ C     LAST CARD OF FUNCTION ENORM.
 C
       END
 
-      SUBROUTINE FDJAC1(FCN,N,X,FVEC,FJAC,LDFJAC,IFLAG,ML,MU,EPSFCN,WA1,
-     +                  WA2)
+      SUBROUTINE FDJAC1(MD,ND,NPTQ,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+     +          PHI1,QWORK,FCN,N,X,FVEC,FJAC,LDFJAC,
+     +          IFLAG,ML,MU,EPSFCN,WA1,WA2)
 C     **********
 C
 C     SUBROUTINE FDJAC1
@@ -2796,10 +2836,13 @@ C
 C     **********
 C     .. Scalar Arguments ..
       DOUBLE PRECISION EPSFCN
-      INTEGER IFLAG,LDFJAC,ML,MU,N
+      INTEGER IFLAG,LDFJAC,ML,MU,N,MD,ND,NPTQ
 C     ..
 C     .. Array Arguments ..
-      DOUBLE PRECISION FJAC(LDFJAC,N),FVEC(N),WA1(N),WA2(N),X(N)
+      DOUBLE PRECISION FJAC(LDFJAC,N),FVEC(N),WA1(N),WA2(N),X(N),
+     +     ALFA0(MD), ALFA1(ND), PHI0(MD), PHI1(ND),
+     +     QWORK(NPTQ* (2* (ND+MD)+3))
+      DOUBLE COMPLEX, INTENT(IN) :: W0(MD), W1(ND), Z0(MD), Z1(ND)
 C     ..
 C     .. Subroutine Arguments ..
       EXTERNAL FCN
@@ -2834,7 +2877,8 @@ C
           H = EPS*DABS(TEMP)
           IF (H.EQ.ZERO) H = EPS
           X(J) = TEMP + H
-          CALL FCN(N,X,WA1,IFLAG)
+          CALL FCN(MD,ND,NPTQ,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+     +     PHI1,QWORK,N,X,WA1,IFLAG)
           IF (IFLAG.LT.0) GO TO 30
           X(J) = TEMP
           DO 10 I = 1,N
@@ -2855,7 +2899,8 @@ C
               IF (H.EQ.ZERO) H = EPS
               X(J) = WA2(J) + H
    50     CONTINUE
-          CALL FCN(N,X,WA1,IFLAG)
+          CALL FCN(MD,ND,NPTQ,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,
+     +     PHI1,QWORK,N,X,WA1,IFLAG)
           IF (IFLAG.LT.0) GO TO 90
           DO 70 J = K,N,MSUM
               X(J) = WA2(J)
