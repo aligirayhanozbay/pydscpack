@@ -639,27 +639,7 @@ c      COMMON /PARAM2/U,PHI0,PHI1,ALFA0,ALFA1,QWORK
 c      COMMON /PARAM3/M,N,NPTQ,ISHAPE,LINEARC,NSHAPE,IND
       COMMON /PARAM4/UARY,VARY,DLAM,IU
       COMMON /PARAM5/ISPRT,ICOUNT
-C     ..
-c$$$      WRITE (6,FMT=*) '---------'
-c$$$      WRITE (6,FMT=*) 'DSCFUN CALLED'
-c$$$      WRITE (6,FMT=*) '---------'
-c$$$      WRITE (6,FMT=*) W0
-c$$$      WRITE (6,FMT=*) '---------'
-c$$$      WRITE (6,FMT=*) W1
-c$$$      WRITE (6,FMT=*) '---------'
-c$$$      WRITE (6,FMT=*) Z0
-c$$$      WRITE (6,FMT=*) '---------'
-c$$$      WRITE (6,FMT=*) Z1
-c$$$      WRITE (6,FMT=*) '---------'
-c$$$      WRITE (6,FMT=*) C
-c$$$      WRITE (6,FMT=*) '---------'
-c$$$      WRITE (6,FMT=*) U
-c$$$      WRITE (6,FMT=*) '---------'
-c$$$      WRITE (6,FMT=*) PHI0
-c$$$      WRITE (6,FMT=*) '---------'
-c$$$      WRITE (6,FMT=*) PHI1
-c$$$      WRITE (6,FMT=*) '---------'
-c$$$      WRITE (6,FMT=*) QWORK
+
       CALL XWTRAN(M,N,X,U,C,W0,W1,PHI0,PHI1)
       CALL THDATA(U)
       ZI = (0.D0,1.D0)
@@ -1187,7 +1167,7 @@ C     .. Local Scalars ..
       INTEGER I,INZ,IT,K,KNZ
 C     ..
 C     .. Local Arrays ..
-      DOUBLE COMPLEX ZS0(50),ZS1(50)
+      DOUBLE COMPLEX ZS0(M),ZS1(N)
 C     ..
 C     .. External Functions ..
       DOUBLE COMPLEX WPROD,ZDSC
@@ -1993,7 +1973,7 @@ C
       IFLAG = 2
       CALL FDJAC1(MD,ND,NPTQ,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,QWORK,FCN
      +                ,N,X,FVEC,FJAC,LDFJAC,IFLAG,ML,MU,EPSFCN,WA1,WA2)
-      WRITE(6,FMT=*) 'YAY2'
+      
       NFEV = NFEV + MSUM
       IF (IFLAG.LT.0) GO TO 300
 C

@@ -89,11 +89,18 @@ def map_wdsc(zz, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, ep
 #         p.close()
 #     return zz
 
-def check_laplacian(c, spacing):
+def check_laplacian(c, spacing, u, *wdsc_args):
     spacing = np.real(spacing)
+    if not isinstance(c, np.ndarray):
+        c = np.array(c)
     if not (c.dtype == np.complex128 or c.dtype==np.complex64):
         c = np.complex(*c)
     zcoords = np.array([c, c+spacing, c-spacing, c+1j*spacing, c-1j*spacing], dtype = c.dtype)
+    wcoords = map_wdsc(zcoords,u,*wdsc_args)
+    wnorm = np.real(wcoords * np.conj(wcoords))
+    soln = 1-(1/np.log(u))*np.log(wnorm**0.5)
+    laplacian = (np.sum(soln[1:]) - 4*soln[0])/(spacing**2)
+    return laplacian
     
 
     
@@ -150,7 +157,19 @@ if __name__ == '__main__':
     uplot = 1-(1/np.log(u))*np.log(wnorm**0.5)
     unstructured_plot(wplot, f=uplot, plotname='/tmp/laplace_annulus.png')
     unstructured_plot(zplot, outer_coords, inner_coords, f=uplot, plotname='/tmp/laplace_z.png')
-    
+
+    spacings = 5*np.array([10**(-n) for n in range(5)])
+    laplacians = []
+    for spacing in spacings:
+        laplacian = check_laplacian(1.75+1.75*1j, spacing, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1e-6, 1)
+        laplacians.append(laplacian)
+
+    plt.figure()
+    plt.loglog(1/spacings**2, laplacians)
+    plt.xlabel('1/dx^2')
+    plt.ylabel('error @ 1.75+1.75i')
+    plt.savefig('/tmp/laplacian_convergence.png')
+    plt.close()
     #import pdb; pdb.set_trace()
     #print(alfa0)
     #print(alfa1)
