@@ -50,14 +50,14 @@ if __name__ == '__main__':
     print(qwork.shape)
     dsc.check(alfa0, alfa1, ishape)
 
-    u,c,w0,w1,phi0,phi1 = dsc.dscsolv(tol, iguess, outer_coords, inner_coords, alfa0, alfa1, nptq, qwork, ishape, linearc) #mapping parameters
-    dsc.thdata(u)
-    dsc.dsctest(u,c,w0,w1,outer_coords,inner_coords,alfa0,alfa1,nptq,qwork)
+    u,c,w0,w1,phi0,phi1,uary,vary,dlam,iu,isprt,icount = dsc.dscsolv(tol, iguess, outer_coords, inner_coords, alfa0, alfa1, nptq, qwork, ishape, linearc) #mapping parameters
+    dsc.thdata(uary,vary,dlam,iu,u)
+    dsc.dsctest(uary,vary,dlam,iu,u,c,w0,w1,outer_coords,inner_coords,alfa0,alfa1,nptq,qwork)
 
     test_pt = complex('1.50+0.0j')
-    ww = dsc.wdsc(test_pt, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1e-8, 1)
+    ww = dsc.wdsc(test_pt, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1e-8, 1, uary, vary, dlam, iu)
     print(ww)
-    zz = dsc.zdsc(ww, 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1)
+    zz = dsc.zdsc(ww, 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1, uary, vary, dlam, iu)
     print(zz)
 
     n_plotpts = (50,200)
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     wnorm = np.real(wplot * np.conj(wplot))
     wangle = np.angle(wplot)
 
-    zplot = map_zdsc(wplot.reshape(-1), 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1).reshape(wplot.shape)
+    zplot = map_zdsc(wplot.reshape(-1), 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1, uary, vary, dlam, iu).reshape(wplot.shape)
     
     
     np.save('wplot.npy',wplot)
@@ -82,5 +82,5 @@ if __name__ == '__main__':
     A0 = 1.0
     B0 = -A0/np.log(u)
     uplot = 1-(1/np.log(u))*np.log(wnorm**0.5)
-    unstructured_plot(wplot, f=uplot, plotname='/tmp/laplace_annulus.png')
+    unstructured_plot(wplot, f=uplot, circle=u, plotname='/tmp/laplace_annulus.png')
     unstructured_plot(zplot, outer_coords, inner_coords, f=uplot, plotname='/tmp/laplace_z.png')

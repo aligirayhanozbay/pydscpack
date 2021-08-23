@@ -8,7 +8,7 @@ def complexify(x):
     return np.array([complex(zs) for zs in x])
 
 
-def unstructured_plot(w, *obj_boundaries, f=None, arg = None, plotname = './plot.png'):
+def unstructured_plot(w, *obj_boundaries, f=None, arg = None, circle = None, plotname = './plot.png'):
     x = np.real(w).reshape(-1)
     y = np.imag(w).reshape(-1)
     plt.figure()
@@ -28,19 +28,24 @@ def unstructured_plot(w, *obj_boundaries, f=None, arg = None, plotname = './plot
             s_real, s_imag = np.real(start), np.imag(start)
             e_real, e_imag = np.real(end), np.imag(end)
             plt.plot([s_real, e_real], [s_imag,e_imag])
+
+    if circle is not None:
+        circle1 = plt.Circle((0,0), circle, color='w')
+        plt.gca().add_patch(circle1)
+        
     plt.axis('equal')
     plt.colorbar()
     plt.savefig(plotname)
     plt.close()
 
-def wrap_zdsc(indices, queue, ww, kww, ic, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, iopt):
+def wrap_zdsc(indices, queue, ww, kww, ic, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, iopt, uary, vary, dlam, iu):
     for idx, w in zip(indices,ww): 
-        z = dsc.zdsc(w, kww, ic, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, iopt)
+        z = dsc.zdsc(w, kww, ic, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, iopt, uary, vary, dlam, iu)
         queue.put((idx, z))
 
-def wrap_wdsc(indices, queue, zz, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, eps, iopt):
+def wrap_wdsc(indices, queue, zz, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, eps, iopt, uary, vary, dlam, iu):
     for idx, z in zip(indices,zz):
-        w = dsc.wdsc(z, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, eps, iopt)
+        w = dsc.wdsc(z, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, eps, iopt, uary, vary, dlam, iu)
         queue.put((idx, w))
 
 def map_transform(transform, coords, *other_args):
@@ -63,11 +68,11 @@ def map_transform(transform, coords, *other_args):
         p.close()
     return result
 
-def map_zdsc(ww, kww, ic, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, iopt):
-    return map_transform(wrap_zdsc, ww, kww, ic, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, iopt)
+def map_zdsc(ww, *zdsc_args):
+    return map_transform(wrap_zdsc, ww, *zdsc_args)
 
-def map_wdsc(zz, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, eps, iopt):
-    return map_transform(wrap_wdsc, zz, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, eps, iopt)
+def map_wdsc(zz, *wdsc_args):
+    return map_transform(wrap_wdsc, zz, *wdsc_args)
 
 # def map_zdsc(ww, kww, ic, u, c, w0, w1, z0, z1, alfa0, alfa1, phi0, phi1, nptq, qwork, iopt):
 #     processes = []
@@ -124,15 +129,16 @@ if __name__ == '__main__':
     qwork = dsc.qinit(alfa0, alfa1, nptq) # quadrature nodes
     dsc.check(alfa0, alfa1, ishape)
 
-    u,c,w0,w1,phi0,phi1 = dsc.dscsolv(tol, iguess, outer_coords, inner_coords, alfa0, alfa1, nptq, qwork, ishape, linearc) #mapping parameters
-    dsc.thdata(u)
-    dsc.dsctest(u,c,w0,w1,outer_coords,inner_coords,alfa0,alfa1,nptq,qwork)
+    u,c,w0,w1,phi0,phi1,uary,vary,dlam,iu,isprt,icount = dsc.dscsolv(tol, iguess, outer_coords, inner_coords, alfa0, alfa1, nptq, qwork, ishape, linearc) #mapping parameters
+    dsc.thdata(uary,vary,dlam,iu,u)
+    dsc.dsctest(uary,vary,dlam,iu,u,c,w0,w1,outer_coords,inner_coords,alfa0,alfa1,nptq,qwork)
 
     test_pt = complex('1.50+0.0j')
-    ww = dsc.wdsc(test_pt, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1e-6, 1)
+    ww = dsc.wdsc(test_pt, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1e-6, 1,uary,vary,dlam,iu)
     print(ww)
-    zz = dsc.zdsc(ww, 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1)
+    zz = dsc.zdsc(ww, 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1, uary,vary,dlam,iu)
     print(zz)
+    import pdb; pdb.set_trace()
 
     n_plotpts = (50,200)
     r = np.linspace(u,1.0-(1e-5),n_plotpts[0]) #important to not evaluate map at r=1.0 (outer annulus ring)
@@ -143,7 +149,7 @@ if __name__ == '__main__':
     wnorm = np.real(wplot * np.conj(wplot))
     wangle = np.angle(wplot)
     
-    zplot = map_zdsc(wplot.reshape(-1), 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1).reshape(wplot.shape)
+    zplot = map_zdsc(wplot.reshape(-1), 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1, uary, vary, dlam, iu).reshape(wplot.shape)
 
     np.save('wplot.npy',wplot)
     np.save('zplot.npy',zplot)
@@ -157,11 +163,11 @@ if __name__ == '__main__':
     uplot = 1-(1/np.log(u))*np.log(wnorm**0.5)
     unstructured_plot(wplot, f=uplot, plotname='/tmp/laplace_annulus.png')
     unstructured_plot(zplot, outer_coords, inner_coords, f=uplot, plotname='/tmp/laplace_z.png')
-
+    
     spacings = 5*np.array([10**(-n) for n in range(5)])
     laplacians = []
     for spacing in spacings:
-        laplacian = check_laplacian(1.75+1.75*1j, spacing, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1e-6, 1)
+        laplacian = check_laplacian(1.75+1.75*1j, spacing, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1e-6, 1, uary, vary, dlam, iu)
         laplacians.append(laplacian)
 
     plt.figure()
