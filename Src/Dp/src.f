@@ -3694,14 +3694,14 @@ C     .. Local Scalars ..
 
 C     ..
 C     .. Intrinsic Functions ..
-      INTRINSIC SQRT,DGAMMA
+      INTRINSIC SQRT,GAMMA
 C     ..
       NM1 = N - 1
 C
       AB = ALPHA + BETA
       ABI = 2.0D0 + AB
-      MUZERO = 2.0D0** (AB+1.0D0)*DGAMMA(ALPHA+1.0D0)*
-     +         DGAMMA(BETA+1.0D0)/DGAMMA(ABI)
+      MUZERO = 2.0D0** (AB+1.0D0)*GAMMA(ALPHA+1.0D0)*
+     +         GAMMA(BETA+1.0D0)/GAMMA(ABI)
       A(1) = (BETA-ALPHA)/ABI
       B(1) = SQRT(4.0D0* (1.0D0+ALPHA)* (1.0D0+BETA)/
      +       ((ABI+1.0D0)*ABI*ABI))
