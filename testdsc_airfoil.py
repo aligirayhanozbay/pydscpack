@@ -76,13 +76,14 @@ if __name__ == '__main__':
     err = w_map_back - wplot
     err = np.mean(np.real(err * np.conj(err))**0.5)
     print(err)
+    unstructured_plot(w_map_back, f=w_map_back_norm, arg=wnorm, plotname='/tmp/mapback.png')
     
     
     np.save('wplot.npy',wplot)
     np.save('zplot.npy',zplot)
     unstructured_plot(wplot, f=wnorm, arg = wangle, plotname='/tmp/annulus.png')
     unstructured_plot(zplot, outer_coords, inner_coords, f=wnorm, arg = wangle, plotname='/tmp/z.png')
-    unstructured_plot(w_map_back, f=w_map_back_norm, arg=wnorm, plotname='/tmp/mapback.png')
+    
 
     #solve laplace eq with Dirichlet BCs - 0 on inner annulus ring and 1 on outer.
     #Analytical soln is u(r,theta) = u(r) = 1-ln(r)/ln(u)

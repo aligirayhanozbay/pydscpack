@@ -1300,7 +1300,6 @@ C     ..
 C     .. Other functions ..
       DOUBLE COMPLEX ZDSC
       EXTERNAL ZDSC
-
 !$OMP PARALLEL DO
       DO I=1,NWW
          ZZ(I) = ZDSC(WW(I),KWW,IC,M,N,U,C,W0,W1,Z0,Z1,ALFA0
