@@ -24,7 +24,6 @@ def read_airfoil(path, complex = True):
 
 def sort_ccw(pts):
     arguments = np.angle(pts)
-    print(arguments)
     new_indices = np.argsort(arguments)
     return pts[new_indices]
     
@@ -33,6 +32,7 @@ if __name__ == '__main__':
     af_coords = read_airfoil('n0012.dat')
     centroid = np.mean(af_coords)
     af_coords = af_coords - centroid
+    #af_coords = sort_ccw(af_coords)
 
     nptq = 8 #No of Gauss-Jacobi integration pts
     tol = 1e-10 #tolerance for iterative process
@@ -69,13 +69,20 @@ if __name__ == '__main__':
     wnorm = np.real(wplot * np.conj(wplot))
     wangle = np.angle(wplot)
 
-    zplot = map_zdsc(wplot.reshape(-1), 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1, uary, vary, dlam, iu).reshape(wplot.shape)
+    #zplot = map_zdsc(wplot.reshape(-1), 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1, uary, vary, dlam, iu).reshape(wplot.shape)
+    zplot = dsc.forward_map(wplot.reshape(-1), 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1, uary, vary, dlam, iu).reshape(wplot.shape)
+    w_map_back = dsc.backward_map(zplot.reshape(-1), u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1e-8, 1, uary, vary, dlam, iu).reshape(wplot.shape)
+    w_map_back_norm = np.real(w_map_back * np.conj(w_map_back))
+    err = w_map_back - wplot
+    err = np.mean(np.real(err * np.conj(err))**0.5)
+    print(err)
     
     
     np.save('wplot.npy',wplot)
     np.save('zplot.npy',zplot)
     unstructured_plot(wplot, f=wnorm, arg = wangle, plotname='/tmp/annulus.png')
     unstructured_plot(zplot, outer_coords, inner_coords, f=wnorm, arg = wangle, plotname='/tmp/z.png')
+    unstructured_plot(w_map_back, f=w_map_back_norm, arg=wnorm, plotname='/tmp/mapback.png')
 
     #solve laplace eq with Dirichlet BCs - 0 on inner annulus ring and 1 on outer.
     #Analytical soln is u(r,theta) = u(r) = 1-ln(r)/ln(u)

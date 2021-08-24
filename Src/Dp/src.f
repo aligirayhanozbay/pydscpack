@@ -1,4 +1,4 @@
-C
+C     
 C
 ************* DSCPACK *************************************************
 * THIS IS A COLLECTION OF SUBROUTINES TO SOLVE PARAMETER PROBLEM OF   *
@@ -1141,7 +1141,8 @@ C   A COMBINATION OF A CIRCULAR ARC AND LINE SEGMENT(S):
      +       W0,W1,ALFA0,ALFA1,NPTQ,QWORK,0,1)
       RETURN
 
-      END
+      END FUNCTION
+      
       DOUBLE COMPLEX
 C   ----------------------------------------------------
      +  FUNCTION WDSC(ZZ,M,N,U,C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,NPTQ,
@@ -1278,6 +1279,65 @@ C  5.VERIFICATION:
      +       'THE DESIGNED INVERSION PROCEDURE EXPERIENCED',/,8X,
      +       'SOME ESSENTIAL DIFFICULTIES.')
       END
+      
+      SUBROUTINE FORWARD_MAP(ZZ,NWW,WW,KWW,IC,M,N,U,C,W0,W1
+     +   ,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1,NPTQ,QWORK,IOPT,UARY,VARY,DLAM,IU)
+C     Simple function to evaluate ZDSC in parallel using OpenMP
+C     Inputs the same as ZDSC, except for the addition of ZZ and NWW
+C     which are the output array and # of elements in WW, respectively
+C     .. Scalar Arguments ..
+      DOUBLE COMPLEX, INTENT(IN) :: C
+      DOUBLE PRECISION, INTENT(IN) :: U, DLAM
+      INTEGER, INTENT(IN) :: IOPT,KWW,M,N,NPTQ,NWW,IU
+C     ..
+C     .. Array Arguments ..
+      DOUBLE COMPLEX, INTENT(IN) :: W0(M),W1(N),Z0(M),Z1(N),WW(NWW)
+      DOUBLE PRECISION, INTENT(IN) :: ALFA0(M),ALFA1(N),PHI0(M),PHI1(N),
+     +     QWORK(NPTQ*(2*(M+N)+3)), UARY(8), VARY(3)
+C     .. Output var ..
+      DOUBLE COMPLEX, INTENT(OUT) :: ZZ(NWW)
+C     ..
+C     .. Other functions ..
+      DOUBLE COMPLEX ZDSC
+      EXTERNAL ZDSC
+
+!$OMP PARALLEL DO
+      DO I=1,NWW
+         ZZ(I) = ZDSC(WW(I),KWW,IC,M,N,U,C,W0,W1,Z0,Z1,ALFA0
+     +        ,ALFA1,PHI0,PHI1,NPTQ,QWORK,IOPT,UARY,VARY,DLAM,IU)
+      END DO
+      
+      END
+
+      SUBROUTINE BACKWARD_MAP(WW,NZZ,ZZ,M,N,U,C,W0,W1,Z0,Z1,ALFA0
+     +          ,ALFA1,PHI0,PHI1,NPTQ,QWORK,EPS,IOPT,UARY,VARY,DLAM,IU)
+C     Simple function to evaluate WDSC in parallel using OpenMP
+C     Inputs the same as WDSC, except for the addition of ZZ and NWW
+C     which are the output array and # of elements in WW, respectively
+C     .. Scalar Arguments ..
+      DOUBLE COMPLEX, INTENT(IN) :: C
+      DOUBLE PRECISION, INTENT(IN) :: U, DLAM,EPS
+      INTEGER, INTENT(IN) :: IOPT,M,N,NPTQ,IU,NZZ
+C     ..
+C     .. Array Arguments ..
+      DOUBLE COMPLEX, INTENT(IN) :: W0(M),W1(N),Z0(M),Z1(N),ZZ(NZZ)
+      DOUBLE PRECISION, INTENT(IN) :: ALFA0(M),ALFA1(N),PHI0(M),PHI1(N),
+     +     QWORK(NPTQ*(2*(M+N)+3)), UARY(8), VARY(3)
+C     .. Output var ..
+      DOUBLE COMPLEX, INTENT(OUT) :: WW(NZZ)
+C     ..
+C     .. Other functions ..
+      DOUBLE COMPLEX WDSC
+      EXTERNAL WDSC
+
+!$OMP PARALLEL DO
+      DO I=1,NZZ
+         WW(I) = WDSC(ZZ(I),M,N,U,C,W0,W1,Z0,Z1,ALFA0,ALFA1,PHI0,PHI1
+     +                ,NPTQ,QWORK,EPS,IOPT,UARY,VARY,DLAM,IU)
+      END DO
+      
+      END
+      
 C    --------------------------------------
       SUBROUTINE ANGLES(MN,Z01,ALFA01,I01)
 C    --------------------------------------
