@@ -50,8 +50,8 @@ class AnnulusMap:
             
 
         #compute turning angles
-        turning_angles_outer = dsc.angles(outer_coords, 0)
-        turning_angles_inner = dsc.angles(inner_coords, 1)
+        turning_angles_outer = dsc.angles(outer_polygon, 0)
+        turning_angles_inner = dsc.angles(inner_polygon, 1)
 
         #compute Gauss-Jacobi quadrature points
         gj_quadrature_params = dsc.qinit(turning_angles_outer, turning_angles_inner, nptq)
