@@ -1,8 +1,14 @@
-#import os
-#import glob
+import platform
 from numpy.distutils.core import Extension
 
-dsc = Extension(name='dsc', sources=['pydsc/Src/Dp/src.f'], extra_f77_compile_args=['-O3','-march=native','-fopenmp'], libraries=['gomp'])
+isa = platform.machine()
+if isa == 'x86_64' or isa == 'i386':
+	arch_flag = '-march=native'
+else:
+	arch_flag = '-mcpu=native'
+
+compiler_opts = ['-O3',arch_flag,'-fopenmp']
+dsc = Extension(name='dsc', sources=['pydsc/Src/Dp/src.f'], extra_f77_compile_args=compiler_opts, extra_f90_compile_args=compiler_opts, libraries=['gomp'])
 
 if __name__ == '__main__':
 	pkg_name = 'pydsc'
@@ -12,5 +18,3 @@ if __name__ == '__main__':
 		description='A python toolkit to compute doubly connected Schwarz-Christoffel mappings',
 		ext_modules=[dsc]
 	)
-	#library = glob.glob('dsc*.so')[0]
-	#os.rename(library, pkg_name + '/' + library)
