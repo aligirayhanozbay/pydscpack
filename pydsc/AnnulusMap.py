@@ -1,5 +1,6 @@
 import dsc
 import numpy as np
+import matplotlib.pyplot as plt
 
 class AnnulusMap:
     initial_guess_types = {
@@ -168,6 +169,85 @@ class AnnulusMap:
                             self.mapping_params['theta_dlam'],
                             self.mapping_params['theta_iu']).reshape(orig_shape)
         return w
+
+    def plot_map(self, *fields, w = None, z = None, xlim = None, ylim = None, draw_boundaries = True, save_path = None, n_pts = None, plot_type = None, **map_params):
+        '''
+        Plot quantities in both the annular (w-) and original (z-) coordinates.
+
+        Inputs:
+        -fields: List[Union[np.array, str]]. Fields to plot. If str, 
+        -w: np.array. Locations of the data points in fields in w-coordinates.
+        -z: np.array. Locations of the data points in fields in z-coordinates. Do not specify w and z simultaneously.
+        -draw_boundaries: bool. True to enable drawing of the vertices.
+        -save_path: str. Directory to save the output in.
+        -n_pts: Tuple[int]. In case w and z are not supplied, this argument may be used to specify the number of gridpoints in radial and angular dimensions in the w-plane.
+        -map_params: Dict. Additional params to supply to self.forward_map/self.backward_map.
+        '''
+        #import pdb; pdb.set_trace()
+        if plot_type is None:
+            plot_type = 'contour'
+        plot_type_map = {'contour': lambda ax,x,y,f: ax.tricontour(x,y,f), 'contourf': lambda ax,x,y,f: ax.tricontourf(x,y,f), 'scatter': lambda ax,x,y,f: ax.scatter(x,y,c=f)}
+        
+        if len(fields) == 0:
+            fields = ['norm', 'argument']
+        default_npts = (50,200) #(radial resolution, angular resolution)
+        if n_pts is None:
+            for field in fields:
+                try:
+                    n_pts = field.shape
+                except:
+                    n_pts = default_npts
+            
+        if w is None and z is None:
+            r = np.linspace(self.mapping_params['inner_radius'],1.0-(1e-5),n_pts[0]) #important to not evaluate map at r=1.0 (outer annulus ring)
+            theta = np.linspace(0,2*np.pi,n_pts[1],endpoint=False)
+            a = np.exp(theta*1j)
+            w = np.einsum('i,j->ij', r, a)
+            z = self.forward_map(w, **map_params)
+        elif w is not None and z is None:
+            z = self.forward_map(w, **map_params)
+        elif z is not None and w is None:
+            w = self.backward_map(z, **map_params)
+        else:
+            raise(ValueError('Supply w or z, but not both.'))
+        wreal, wimag = np.real(w).reshape(-1), np.imag(w).reshape(-1)
+        zreal, zimag = np.real(z).reshape(-1), np.imag(z).reshape(-1)
+
+        for k,field in enumerate(fields):
+            if isinstance(field, str):
+                if field == 'norm':
+                    fields[k] = np.real(w * np.conj(w))
+                elif field == 'argument':
+                    fields[k] = np.angle(w)
+        
+        plt.figure()
+        fig, (z_ax,w_ax) = plt.subplots(2)
+        if draw_boundaries:
+            for obj_boundary in [self.mapping_params['outer_polygon_vertices'], self.mapping_params['inner_polygon_vertices']]:
+                for start, end in zip(obj_boundary, np.roll(obj_boundary,-1)):
+                    s_real, s_imag = np.real(start), np.imag(start)
+                    e_real, e_imag = np.real(end), np.imag(end)
+                    z_ax.plot([s_real, e_real], [s_imag,e_imag])
+        for field in fields:
+            plot_type_map[plot_type](z_ax, zreal, zimag, field.reshape(-1))
+            plot_type_map[plot_type](w_ax, wreal, wimag, field.reshape(-1))
+        w_ax.add_patch(plt.Circle((0,0), self.mapping_params['inner_radius'], color='w'))
+
+        if xlim is not None:
+            z_ax.set_xlim(*xlim)
+        if ylim is not None:
+            z_ax.set_ylim(*ylim)
+
+        w_ax.set_aspect('equal')
+        z_ax.set_aspect('equal')
+
+        if save_path is None:
+            plt.show()
+        else:
+            plt.savefig(save_path)
+        plt.close()
+        
+        
 
 if __name__ == '__main__':
 
