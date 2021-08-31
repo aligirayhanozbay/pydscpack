@@ -1,4 +1,4 @@
-import dsc
+import pydsc
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -44,51 +44,23 @@ if __name__ == '__main__':
     inner_coords = af_coords[::4]
     print(len(inner_coords))
     
-    alfa0 = dsc.angles(outer_coords, 0) #turning angles for the outer and inner polygon.
-    alfa1 = dsc.angles(inner_coords, 1)
-    qwork = dsc.qinit(alfa0, alfa1, nptq) # quadrature nodes
-    print(qwork.shape)
-    dsc.check(alfa0, alfa1, ishape)
-
-    u,c,w0,w1,phi0,phi1,uary,vary,dlam,iu,isprt,icount = dsc.dscsolv(tol, iguess, outer_coords, inner_coords, alfa0, alfa1, nptq, qwork, ishape, linearc) #mapping parameters
-    dsc.thdata(uary,vary,dlam,iu,u)
-    dsc.dsctest(uary,vary,dlam,iu,u,c,w0,w1,outer_coords,inner_coords,alfa0,alfa1,nptq,qwork)
-
-    test_pt = complex('1.50+0.0j')
-    ww = dsc.wdsc(test_pt, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1e-8, 1, uary, vary, dlam, iu)
-    print(ww)
-    zz = dsc.zdsc(ww, 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1, uary, vary, dlam, iu)
-    print(zz)
-
+    amap = pydsc.AnnulusMap(outer_coords, inner_coords)
+    
     n_plotpts = (50,200)
-    r = np.linspace(u,1.0-(1e-5),n_plotpts[0]) #important to not evaluate map at r=1.0 (outer annulus ring)
+    r = np.linspace(amap.mapping_params['inner_radius'],1.0-(1e-5),n_plotpts[0]) #important to not evaluate map at r=1.0 (outer annulus ring)
     theta = np.linspace(0,2*np.pi,n_plotpts[1])
     a = np.exp(theta*1j)
-    
+    #import pdb; pdb.set_trace()
     wplot = np.einsum('i,j->ij', r, a)
     wnorm = np.real(wplot * np.conj(wplot))
     wangle = np.angle(wplot)
 
-    #zplot = map_zdsc(wplot.reshape(-1), 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1, uary, vary, dlam, iu).reshape(wplot.shape)
-    zplot = dsc.forward_map(wplot.reshape(-1), 0, 2, u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1, uary, vary, dlam, iu).reshape(wplot.shape)
-    w_map_back = dsc.backward_map(zplot.reshape(-1), u, c, w0, w1, outer_coords, inner_coords, alfa0, alfa1, phi0, phi1, nptq, qwork, 1e-8, 1, uary, vary, dlam, iu).reshape(wplot.shape)
-    w_map_back_norm = np.real(w_map_back * np.conj(w_map_back))
-    err = w_map_back - wplot
-    err = np.mean(np.real(err * np.conj(err))**0.5)
-    print(err)
-    unstructured_plot(w_map_back, f=w_map_back_norm, arg=wnorm, plotname='/tmp/mapback.png')
-    
-    
-    np.save('wplot.npy',wplot)
-    np.save('zplot.npy',zplot)
+    zplot = amap.forward_map(wplot)
     unstructured_plot(wplot, f=wnorm, arg = wangle, plotname='/tmp/annulus.png')
-    unstructured_plot(zplot, outer_coords, inner_coords, f=wnorm, arg = wangle, plotname='/tmp/z.png')
+    unstructured_plot(zplot, outer_coords, inner_coords, f=wnorm, arg=wangle, plotname='/tmp/z.png')
     
-
-    #solve laplace eq with Dirichlet BCs - 0 on inner annulus ring and 1 on outer.
-    #Analytical soln is u(r,theta) = u(r) = 1-ln(r)/ln(u)
-    A0 = 1.0
-    B0 = -A0/np.log(u)
-    uplot = 1-(1/np.log(u))*np.log(wnorm**0.5)
-    unstructured_plot(wplot, f=uplot, circle=u, plotname='/tmp/laplace_annulus.png')
-    unstructured_plot(zplot, outer_coords, inner_coords, f=uplot, plotname='/tmp/laplace_z.png')
+    zplot = np.array([0.65+0.10*1j,0.75+0.1*1j,0.65-0.10*1j,0.75-0.1*1j])
+    wplot = amap.backward_map(zplot)
+    amap.plot_map(np.ones(zplot.shape),z=zplot, plot_type='scatter', save_path='/tmp/af_sensors_z.png')
+    amap.plot_map(np.ones(zplot.shape),w=wplot, plot_type='scatter', save_path='/tmp/af_sensors_w.png')
+    

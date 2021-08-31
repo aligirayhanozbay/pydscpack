@@ -1,6 +1,7 @@
 import dsc
 import numpy as np
 import matplotlib.pyplot as plt
+import itertools
 
 class AnnulusMap:
     initial_guess_types = {
@@ -185,7 +186,9 @@ class AnnulusMap:
         '''
         #import pdb; pdb.set_trace()
         if plot_type is None:
-            plot_type = 'contour'
+            plot_type = ['contour' for _ in fields]
+        elif isinstance(plot_type, str):
+            plot_type = [plot_type for _ in fields]
         plot_type_map = {'contour': lambda ax,x,y,f: ax.tricontour(x,y,f), 'contourf': lambda ax,x,y,f: ax.tricontourf(x,y,f), 'scatter': lambda ax,x,y,f: ax.scatter(x,y,c=f)}
         
         if len(fields) == 0:
@@ -197,41 +200,64 @@ class AnnulusMap:
                     n_pts = field.shape
                 except:
                     n_pts = default_npts
-            
+        
+        w_reals = []
+        w_imags = []
+        z_reals = []
+        z_imags = []
         if w is None and z is None:
             r = np.linspace(self.mapping_params['inner_radius'],1.0-(1e-5),n_pts[0]) #important to not evaluate map at r=1.0 (outer annulus ring)
             theta = np.linspace(0,2*np.pi,n_pts[1],endpoint=False)
             a = np.exp(theta*1j)
             w = np.einsum('i,j->ij', r, a)
             z = self.forward_map(w, **map_params)
+            w = itertools.repeat(w,len(fields))
+            z = itertools.repeat(z,len(fields))
         elif w is not None and z is None:
-            z = self.forward_map(w, **map_params)
+            if isinstance(w,np.ndarray):
+                z = self.forward_map(w, **map_params)
+                w = itertools.repeat(w,len(fields))
+                z = itertools.repeat(z,len(fields))
+            else:
+                z = [self.forward_map(ws, **map_params) for ws in w]
         elif z is not None and w is None:
-            w = self.backward_map(z, **map_params)
+            if isinstance(z,np.ndarray):
+                w = self.backward_map(z, **map_params)
+                z = itertools.repeat(z,len(fields))
+                w = itertools.repeat(w,len(fields))
+            else:
+                w = [self.backward_map(zs, **map_params) for zs in z]
         else:
             raise(ValueError('Supply w or z, but not both.'))
-        wreal, wimag = np.real(w).reshape(-1), np.imag(w).reshape(-1)
-        zreal, zimag = np.real(z).reshape(-1), np.imag(z).reshape(-1)
-
-        for k,field in enumerate(fields):
-            if isinstance(field, str):
-                if field == 'norm':
-                    fields[k] = np.real(w * np.conj(w))
-                elif field == 'argument':
-                    fields[k] = np.angle(w)
+        for ws, zs in zip(w,z): 
+            wreal, wimag = np.real(ws).reshape(-1), np.imag(ws).reshape(-1)
+            zreal, zimag = np.real(zs).reshape(-1), np.imag(zs).reshape(-1)
+            w_reals.append(wreal)
+            w_imags.append(wimag)
+            z_reals.append(zreal)
+            z_imags.append(zimag)
         
         plt.figure()
         fig, (z_ax,w_ax) = plt.subplots(2)
+        
         if draw_boundaries:
             for obj_boundary in [self.mapping_params['outer_polygon_vertices'], self.mapping_params['inner_polygon_vertices']]:
                 for start, end in zip(obj_boundary, np.roll(obj_boundary,-1)):
                     s_real, s_imag = np.real(start), np.imag(start)
                     e_real, e_imag = np.real(end), np.imag(end)
                     z_ax.plot([s_real, e_real], [s_imag,e_imag])
-        for field in fields:
-            plot_type_map[plot_type](z_ax, zreal, zimag, field.reshape(-1))
-            plot_type_map[plot_type](w_ax, wreal, wimag, field.reshape(-1))
-        w_ax.add_patch(plt.Circle((0,0), self.mapping_params['inner_radius'], color='w'))
+                    
+        for field,ptype,zreal,zimag,wreal,wimag in zip(fields, plot_type, z_reals, z_imags, w_reals, w_imags):
+            if isinstance(field, str):
+                if field == 'norm':
+                    field = (wreal**2 + wimag**2)**0.5
+                elif field == 'argument':
+                    field = np.angle(wreal + 1j*wimag)
+            plot_type_map[ptype](z_ax, zreal.reshape(-1), zimag.reshape(-1), field.reshape(-1))
+            plot_type_map[ptype](w_ax, wreal.reshape(-1), wimag.reshape(-1), field.reshape(-1))
+            
+        w_ax.add_patch(plt.Circle((0,0), self.mapping_params['inner_radius'], edgecolor='k', fill=False))
+        w_ax.add_patch(plt.Circle((0,0), 1.0, edgecolor='k', fill=False))
 
         if xlim is not None:
             z_ax.set_xlim(*xlim)
@@ -245,6 +271,7 @@ class AnnulusMap:
             plt.show()
         else:
             plt.savefig(save_path)
+            
         plt.close()
         
         
