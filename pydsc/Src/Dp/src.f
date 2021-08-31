@@ -947,45 +947,8 @@ C  HYBRD CONTROL PARAMETERS:
       FACTOR = 2.D0
       NM = M + N + 2
 C
-C  COPY RELEVANT DATA TO THE COMMON BLOCK IN DSCFUN:
-c$$$      M2 = M
-c$$$      N2 = N
-c$$$      ISHAPE2 = ISHAPE
-c$$$      LINEARC2 = LINEARC
-c$$$      NPTQ2 = NPTQ
-c$$$      DO 90 K = 1,M
-c$$$          W02(K) = W0(K)
-c$$$          PHI02(K) = PHI0(K)
-c$$$          Z02(K) = Z0(K)
-c$$$          ALFA02(K) = ALFA0(K)
-c$$$   90 CONTINUE
-c$$$      DO 100 K = 1,N
-c$$$          W12(K) = W1(K)
-c$$$          PHI12(K) = PHI1(K)
-c$$$          Z12(K) = Z1(K)
-c$$$          ALFA12(K) = ALFA1(K)
-c$$$  100 CONTINUE
-c$$$      NWDIM = NPTQ* (2* (M+N)+3)
-c$$$      DO 110 I = 1,NWDIM
-c$$$          QWORK2(I) = QWORK(I)
-c$$$  110 CONTINUE
-C
 C  CHOOSE SCREEN DISPLAY:
       ISPRT = 2
-      IF (ISPRT.EQ.1) THEN
-          WRITE (6,FMT=*)
-     +      '# OF ITERATIONS> <MAXIMUM NORM OF THE RESIDUALS'
-
-      ELSE
-          WRITE (6,FMT=*)
-     +      '***TIME FOR OBTAINING A CONVERGED RESULT MAY RANGE'
-          WRITE (6,FMT=*)
-     +      ' FROM SEVERAL SECONDS TO SEVERAL MINUTES OR LONGER'
-          WRITE (6,FMT=*)
-     +      ' DEPENDING ON THE COMPLEXITY OF THE GEOMETRY OF THE'
-          WRITE (6,FMT=*) '    REGION AND THE LOCAL COMPUTING SYSTEM.'
-          WRITE (6,FMT=*) '               SO, BE PATIENT !'
-      END IF
 C
 C  SOLVE NONLINEAR SYSTEM WITH HYBRD:
       CALL HYBRD(ISPRT,ICOUNT,UARY,VARY,DLAM,IU,M,N,NPTQ,W0,W1,Z0,Z1,
@@ -999,7 +962,7 @@ C  FOUND IN THE DOCUMENTATION OF HYBRD.(INFO=1: SECCESSFUL EXIT)
 C
 C  COPY OUTPUT DATA FROM COMMON BLOCK AND PRINT THE RESULTS:
       CALL XWTRAN(M,N,X,U,C,W0,W1,PHI0,PHI1)
-      CALL DSCPRINT(M,N,C,U,W0,W1,PHI0,PHI1,TOL,NPTQ)
+C      CALL DSCPRINT(M,N,C,U,W0,W1,PHI0,PHI1,TOL,NPTQ)
       RETURN
 
       END
@@ -1570,12 +1533,12 @@ C     ..
 C     .. Intrinsic Functions ..
       INTRINSIC ABS
 C     ..
-c      IF (M.GE.3 .AND. M.LE.30 .AND. N.LE.30 .AND.
-c     +    M+N.LE.40) GO TO 10
-c      WRITE (6,FMT=*) '***WARNING: M MUST BE NO LESS THEN 3'
+      IF (M.GE.3 .AND. M.LE.30 .AND. N.LE.30 .AND.
+     +     M+N.LE.40) GO TO 10
+      WRITE (6,FMT=*) '***WARNING: M MUST BE NO LESS THAN 3'
 c      WRITE (6,FMT=*) '*********** N , M MUST BE NO GREATER THAN 30'
 c      WRITE (6,FMT=*) '*********** M+N MUST BE NO GREATER THAN 40'
-c      STOP
+      STOP
 
    10 EPS = 0.00001D0
       SUM = 0.D0
@@ -1627,10 +1590,7 @@ c      STOP
       WRITE (6,FMT=*)
      +  '***WARNING: Z0(M-1) MUST NOT BE AN ARTIFITIAL CORNER'
       STOP
-
-  110 WRITE (6,FMT=*)
-     +  '*** INPUTS ARE CHECKED WITH NO ERROR BEING FOUND ***'
-      RETURN
+ 110  RETURN
 
       END
       DOUBLE PRECISION
@@ -1713,7 +1673,7 @@ C
       END
 C   ----------------------------------------------------------------
       SUBROUTINE DSCTEST(UARY,VARY,DLAM,IU,M,N,U,C,W0,W1,Z0,Z1
-     +     ,ALFA0,ALFA1,NPTQ,QWORK)
+     +     ,ALFA0,ALFA1,NPTQ,QWORK,ERRMIN,ERRMAX)
 C   ----------------------------------------------------------------
 C   TESTS THE COMPUTED PARAMETERS FOR ACCURACY BY COMPUTING VERTICES
 C   Z0(K) NUMERICALLY AND COMPARING WITH THE EXACT ONES. ON OUTPUT,
@@ -1740,7 +1700,8 @@ C     .. Arrays in Common ..
 C     ..
 C     .. Local Scalars ..
       DOUBLE COMPLEX WA,ZC,ZTEST
-      DOUBLE PRECISION D,D1,DIST,ERRMAX,ERRMIN
+      DOUBLE PRECISION D,D1,DIST
+      DOUBLE PRECISION, INTENT(OUT) :: ERRMIN, ERRMAX
       INTEGER I,K,KMAX,KMIN,KWA
 C     ..
 C     .. External Functions ..
@@ -1760,31 +1721,33 @@ C     ..
           DIST = 2.D0
           DO 10 I = 1,N
               D = ABS(W0(K)-W1(I))
-              IF (D.GE.DIST) GO TO 10
+              IF (D.GE.DIST) THEN
+                 GO TO 10
+              END IF
               DIST = D
               WA = W1(I)
               KWA = I
               ZC = Z1(I)
-   10     CONTINUE
+           
+ 10        CONTINUE
           ZTEST = ZC + C*WQUAD(UARY,VARY,DLAM,IU,WA,0.D0,KWA,1,W0(K)
      +         ,0.D0,K,0,0.D0,M,N,U,
      +            W0,W1,ALFA0,ALFA1,NPTQ,QWORK,0,1)
           D1 = ABS(Z0(K)-ZTEST)
           IF (D1.GT.ERRMAX) THEN
-              ERRMAX = D1
+             ERRMAX = D1
               KMAX = K
-          END IF
-
+           END IF
+           
           IF (D1.LT.ERRMIN) THEN
-              ERRMIN = D1
-              KMIN = K
+             ERRMIN = D1
+             KMIN = K
           END IF
-
+       
    20 CONTINUE
-      WRITE (6,FMT=9000) ERRMAX,KMAX,ERRMIN,KMIN
-      WRITE (11,FMT=9000) ERRMAX,KMAX,ERRMIN,KMIN
-      RETURN
-
+C      WRITE (6,FMT=9000) ERRMAX,KMAX,ERRMIN,KMIN
+C      WRITE (11,FMT=9000) ERRMAX,KMAX,ERRMIN,KMIN
+      RETURN    
  9000 FORMAT (/,1X,'ACCURACY TEST: MAXIMUM ERROR=',E10.3,2X,'ACHIEVED',
      +       1X,'AT',1X,'KMAX=',I2,/,16X,'MINIMUM ERROR=',E10.3,2X,
      +       'ACHIEVED',1X,'AT',1X,'KMAX=',I2,/)

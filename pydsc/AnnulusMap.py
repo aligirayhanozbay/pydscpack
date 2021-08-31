@@ -171,6 +171,9 @@ class AnnulusMap:
                             self.mapping_params['theta_iu']).reshape(orig_shape)
         return w
 
+    def test_map(self):
+        return dsc.dsctest(self.mapping_params['theta_mu'], self.mapping_params['theta_v'], self.mapping_params['theta_dlam'], self.mapping_params['theta_iu'], self.mapping_params['inner_radius'], self.mapping_params['scaling'], self.mapping_params['outer_polygon_prevertices'], self.mapping_params['inner_polygon_prevertices'], self.mapping_params['outer_polygon_vertices'], self.mapping_params['inner_polygon_vertices'], self.mapping_params['outer_polygon_turning_angles'], self.mapping_params['inner_polygon_turning_angles'], self.mapping_params['gj_quadrature_points'], self.mapping_params['gj_quadrature_params'])
+
     def plot_map(self, *fields, w = None, z = None, xlim = None, ylim = None, draw_boundaries = True, save_path = None, n_pts = None, plot_type = None, **map_params):
         '''
         Plot quantities in both the annular (w-) and original (z-) coordinates.
@@ -277,23 +280,11 @@ class AnnulusMap:
         
 
 if __name__ == '__main__':
-
-    from testdsc import unstructured_plot
     
     outer_coords = 5*np.array([2.5+1.5*1j, -1.5+1.5*1j, -1.5-1.5*1j, 2.5-1.5*1j]) #coordinates of the outer polygon
     inner_coords = -1.0*np.array([0.5, -0.5+0.5*1j, -0.5-0.5*1j]) #coordinates of the inner polygon
-
+    
     amap = AnnulusMap(outer_coords, inner_coords, nptq = 64)
 
-    n_plotpts = (50,200)
-    r = np.linspace(amap.mapping_params['inner_radius'],1.0-(1e-5),n_plotpts[0]) #important to not evaluate map at r=1.0 (outer annulus ring)
-    theta = np.linspace(0,2*np.pi,n_plotpts[1])
-    a = np.exp(theta*1j)
-    #import pdb; pdb.set_trace()
-    wplot = np.einsum('i,j->ij', r, a)
-    wnorm = np.real(wplot * np.conj(wplot))
-    wangle = np.angle(wplot)
-
-    zplot = amap.forward_map(wplot)
-    unstructured_plot(wplot, f=wnorm, arg = wangle, plotname='/tmp/annulus.png')
-    unstructured_plot(zplot, outer_coords, inner_coords, f=wnorm, arg=wangle, plotname='/tmp/z.png')
+    print(amap.test_map())
+    amap.plot_map('norm', 'argument', save_path='/tmp/norm_and_argument.png')
