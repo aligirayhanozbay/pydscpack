@@ -527,28 +527,30 @@ C     .. Intrinsic Functions ..
       INTRINSIC ABS,ACOS,COS,DCMPLX,EXP,SIN,SQRT
 C     ..
       PI = ACOS(-1.D0)
+      
       IF (ABS(X(1)).LE.1.D-14) THEN
           U = 0.5D0
-
+       
       ELSE
           U = (X(1)-2.D0-SQRT(0.9216D0*X(1)**2+4.D0))/ (2.D0*X(1))
           U = (0.0196D0*X(1)-1.D0)/ (U*X(1))
       END IF
-
+      
       C = DCMPLX(X(2),X(3))
       IF (ABS(X(N+3)).LE.1.D-14) THEN
           PHI1(N) = 0.D0
-
+          
       ELSE
           PH = (1.D0+SQRT(1.D0+PI*PI*X(N+3)**2))/X(N+3)
           PHI1(N) = PI*PI/PH
       END IF
-
+      
       DPH = 1.D0
       PHSUM = DPH
       DO 10 I = 1,N - 1
           DPH = DPH/EXP(X(3+I))
           PHSUM = PHSUM + DPH
+      
    10 CONTINUE
       DPH = 2.D0*PI/PHSUM
       PHI1(1) = PHI1(N) + DPH
@@ -560,12 +562,14 @@ C     ..
           PHSUM = PHSUM + DPH
           PHI1(I+1) = PHSUM
           W1(I+1) = U*DCMPLX(COS(PHSUM),SIN(PHSUM))
+      
    20 CONTINUE
       DPH = 1.D0
       PHSUM = DPH
       DO 30 I = 1,M - 1
           DPH = DPH/EXP(X(N+3+I))
           PHSUM = PHSUM + DPH
+      
    30 CONTINUE
       DPH = 2.D0*PI/PHSUM
       PHSUM = DPH
@@ -576,6 +580,7 @@ C     ..
           PHSUM = PHSUM + DPH
           PHI0(I+1) = PHSUM
           W0(I+1) = DCMPLX(COS(PHSUM),SIN(PHSUM))
+      
    40 CONTINUE
       RETURN
 
@@ -834,7 +839,9 @@ C     .. Local Scalars ..
       INTEGER I,INFO,K,KM,KN,MAXFUN,NFEV,NM,NWDIM
 C     ..
 C     .. Local Arrays ..
-      DOUBLE PRECISION DIAG(42),FJAC(42,42),FVAL(42),QW(1114),X(42)
+C     DOUBLE PRECISION DIAG(42),FJAC(42,42),FVAL(42),QW(1114),X(42)
+      DOUBLE PRECISION DIAG((M+N+2)*10),FJAC((M+N+2)*10,(M+N+2)*10)
+     +     ,FVAL((M+N+2)*10), X((M+N+2)*10), QW(1114)
 C     ..
 C     .. External Functions ..
       DOUBLE COMPLEX WQUAD
@@ -931,7 +938,7 @@ C  INITIAL GUESS (IGUESS=1):
       END IF
 C
 C  CALCULATE THE INITIAL GUESS X(2) & X(3) TO MATCH
-C  THE CHOICE FOR X(1),X(4),...,X(M+N+2):
+C     THE CHOICE FOR X(1),X(4),...,X(M+N+2):
       CALL XWTRAN(M,N,X,U,C,W0,W1,PHI0,PHI1)
       CALL THDATA(UARY,VARY,DLAM,IU,U)
       WINT = WQUAD(UARY,VARY,DLAM,IU,W0(M),0.D0,M,0,W1(N),0.D0,N,1
@@ -958,7 +965,6 @@ C  SOLVE NONLINEAR SYSTEM WITH HYBRD:
 C
 C  CHECK ERROR INFORMATION. THE DESCRIPTION OF INFO CAN BE
 C  FOUND IN THE DOCUMENTATION OF HYBRD.(INFO=1: SECCESSFUL EXIT)
-      
 C
 C  COPY OUTPUT DATA FROM COMMON BLOCK AND PRINT THE RESULTS:
       CALL XWTRAN(M,N,X,U,C,W0,W1,PHI0,PHI1)
@@ -1533,12 +1539,11 @@ C     ..
 C     .. Intrinsic Functions ..
       INTRINSIC ABS
 C     ..
-      IF (M.GE.3 .AND. M.LE.30 .AND. N.LE.30 .AND.
-     +     M+N.LE.40) GO TO 10
+      IF (M.GE.3) GO TO 10
       WRITE (6,FMT=*) '***WARNING: M MUST BE NO LESS THAN 3'
 c      WRITE (6,FMT=*) '*********** N , M MUST BE NO GREATER THAN 30'
 c      WRITE (6,FMT=*) '*********** M+N MUST BE NO GREATER THAN 40'
-      STOP
+C      STOP
 
    10 EPS = 0.00001D0
       SUM = 0.D0
@@ -1552,12 +1557,12 @@ c      WRITE (6,FMT=*) '*********** M+N MUST BE NO GREATER THAN 40'
       WRITE (6,FMT=*)
      +'***WARNING: FOR FINITE REGIONS ISHAPE MUST BE 0
      +      AND FOR INFINITE REGIONS ISHAPE MUST BE 1'
-      STOP
+C      STOP
 
    30 IF (ABS(SUM- (M-2)).LT.EPS) GO TO 40
       WRITE (6,FMT=*)
      +  '***WARNING: SOME ANGLES FOR OUTER POLYGON ARE WRONG'
-      STOP
+C      STOP
 
    40 SUM = 0.D0
       DO 50 K = 1,N
@@ -1566,30 +1571,30 @@ c      WRITE (6,FMT=*) '*********** M+N MUST BE NO GREATER THAN 40'
       IF (ABS(SUM- (N+2)).LT.EPS) GO TO 60
       WRITE (6,FMT=*)
      +  '***WARNING: SOME ANGLES FOR INNER POLYGON ARE WRONG'
-      STOP
+C      STOP
 
    60 IF (ALFA0(1).GT.0.D0) GO TO 70
       WRITE (6,FMT=*) '***WARNING: Z0(1) MUST BE FINITE'
-      STOP
+C      STOP
 
    70 IF (ALFA0(M).GT.0.D0) GO TO 80
       WRITE (6,FMT=*) '***WARNING: Z0(M) MUST BE FINITE'
-      STOP
+C      STOP
 
    80 IF (ALFA0(M-2).GT.0.D0) GO TO 90
       WRITE (6,FMT=*) '***WARNING: Z0(M-2) MUST BE FINITE'
-      STOP
+C      STOP
 
    90 IF (ALFA0(M-1).LT.2.D0-EPS) GO TO 100
       WRITE (6,FMT=*)
      +  '***WARNING: Z0(M-1) MUST NOT BE A RE-ENTRANT CORNER'
-      STOP
+C      STOP
 
   100 IF (ALFA0(M-1).LT.1.D0-EPS .OR.
      +    ALFA0(M-1).GT.1.D0+EPS) GO TO 110
       WRITE (6,FMT=*)
      +  '***WARNING: Z0(M-1) MUST NOT BE AN ARTIFITIAL CORNER'
-      STOP
+C      STOP
  110  RETURN
 
       END

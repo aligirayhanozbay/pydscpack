@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from testdsc import unstructured_plot, complexify, map_zdsc
+from testdsc import complexify
 
 def read_airfoil(path, complex = True):
     with open(path, 'r') as f:
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     linearc = 1
 
     outer_coords = 1.5*complexify(['1+j', '-1+j', '-1-j', '1-j']) #coordinates of the outer polygon
-    inner_coords = af_coords[::4]
+    inner_coords = af_coords#[::4]
     print(len(inner_coords))
     
     amap = pydsc.AnnulusMap(outer_coords, inner_coords)
@@ -56,11 +56,8 @@ if __name__ == '__main__':
     wangle = np.angle(wplot)
 
     zplot = amap.forward_map(wplot)
-    unstructured_plot(wplot, f=wnorm, arg = wangle, plotname='/tmp/annulus.png')
-    unstructured_plot(zplot, outer_coords, inner_coords, f=wnorm, arg=wangle, plotname='/tmp/z.png')
+    amap.plot_map('norm', 'argument', z=zplot, plot_type='contour', save_path='/tmp/norm_argument.png')
     
     zplot = np.array([0.65+0.10*1j,0.75+0.1*1j,0.65-0.10*1j,0.75-0.1*1j])
     wplot = amap.backward_map(zplot)
-    amap.plot_map(np.ones(zplot.shape),z=zplot, plot_type='scatter', save_path='/tmp/af_sensors_z.png')
-    amap.plot_map(np.ones(zplot.shape),w=wplot, plot_type='scatter', save_path='/tmp/af_sensors_w.png')
-    
+    amap.plot_map(np.ones(zplot.shape),z=zplot, plot_type='scatter', save_path='/tmp/af_sensors.png')    

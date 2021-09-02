@@ -35,6 +35,9 @@ class AnnulusMap:
         self.check_map()
         
     def _calculate_map(self, outer_polygon, inner_polygon, nptq, tol, initial_guess, vertices_at_infinity, integration_path):
+        #import pdb; pdb.set_trace()
+        outer_polygon = self._sort_ccw(outer_polygon)
+        inner_polygon = self._sort_ccw(inner_polygon)
     
         vertices_at_infinity = int(vertices_at_infinity)
         
@@ -69,6 +72,12 @@ class AnnulusMap:
 
         return self._pack_mapping_params(u,c,outer_polygon,inner_polygon,w0,w1,turning_angles_outer,turning_angles_inner,nptq,gj_quadrature_params,phi0,phi1,uary,vary,dlam,iu)
 
+    @staticmethod
+    def _sort_ccw(z):
+        angles = np.angle(z)
+        sort_indices = np.argsort(angles)
+        return z[sort_indices]
+    
     @staticmethod
     def _pack_mapping_params(u,c,z0,z1,w0,w1,alfa0,alfa1,nptq,qwork,phi0,phi1,uary,vary,dlam,iu):
         mapping_params = {
@@ -187,7 +196,7 @@ class AnnulusMap:
         -n_pts: Tuple[int]. In case w and z are not supplied, this argument may be used to specify the number of gridpoints in radial and angular dimensions in the w-plane.
         -map_params: Dict. Additional params to supply to self.forward_map/self.backward_map.
         '''
-        #import pdb; pdb.set_trace()
+        
         if plot_type is None:
             plot_type = ['contour' for _ in fields]
         elif isinstance(plot_type, str):
