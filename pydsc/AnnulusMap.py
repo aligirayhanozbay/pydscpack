@@ -180,6 +180,27 @@ class AnnulusMap:
                             self.mapping_params['theta_iu']).reshape(orig_shape)
         return w
 
+    def _generate_annular_grid(self, npts=None, **map_params):
+        '''
+        Generates a grid of points, equispaced in the radial and angular directions on the annular domain (w-domain). Returns the coordinates in w and z domains.
+
+        Inputs:
+        -npts: Tuple[int]. npts[0] is the # of points in the radial direction. npts[1] is the # of points in the angular direction.
+        -**map_params: kwargs for the optional args of self.forward_map.
+        
+        Outputs:
+        Tuple[np.array] of dtype np.complex128. First element contains complex coordinates of the gridpoints in the w-domain and the second element in the z domain.
+        '''
+        if npts is None:
+            npts = (50,200)
+        r = np.linspace(self.mapping_params['inner_radius'],1.0-(1e-5),n_pts[0]) #important to not evaluate map at r=1.0 (outer annulus ring)
+        theta = np.linspace(0,2*np.pi,n_pts[1],endpoint=False)
+        a = np.exp(theta*1j)
+        w = np.einsum('i,j->ij', r, a)
+        z = self.forward_map(w, **map_params)
+        return w,z
+        
+
     def test_map(self):
         return dsc.dsctest(self.mapping_params['theta_mu'], self.mapping_params['theta_v'], self.mapping_params['theta_dlam'], self.mapping_params['theta_iu'], self.mapping_params['inner_radius'], self.mapping_params['scaling'], self.mapping_params['outer_polygon_prevertices'], self.mapping_params['inner_polygon_prevertices'], self.mapping_params['outer_polygon_vertices'], self.mapping_params['inner_polygon_vertices'], self.mapping_params['outer_polygon_turning_angles'], self.mapping_params['inner_polygon_turning_angles'], self.mapping_params['gj_quadrature_points'], self.mapping_params['gj_quadrature_params'])
 
@@ -218,11 +239,7 @@ class AnnulusMap:
         z_reals = []
         z_imags = []
         if w is None and z is None:
-            r = np.linspace(self.mapping_params['inner_radius'],1.0-(1e-5),n_pts[0]) #important to not evaluate map at r=1.0 (outer annulus ring)
-            theta = np.linspace(0,2*np.pi,n_pts[1],endpoint=False)
-            a = np.exp(theta*1j)
-            w = np.einsum('i,j->ij', r, a)
-            z = self.forward_map(w, **map_params)
+            w,z = self._generate_annular_grid(npts=npts, **map_params)
             w = itertools.repeat(w,len(fields))
             z = itertools.repeat(z,len(fields))
         elif w is not None and z is None:
