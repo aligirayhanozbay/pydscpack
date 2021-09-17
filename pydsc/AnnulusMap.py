@@ -199,6 +199,22 @@ class AnnulusMap:
         w = np.einsum('i,j->ij', r, a)
         z = self.forward_map(w, **map_params)
         return w,z
+
+    def dzdw(self, w_coord):
+        #dz/dw = C * wprod(w) - read area around Eq 2.6 in Hu 1998
+        orig_shape = w_coord.shape
+        C = self.mapping_params['scaling']
+        wprod = dsc.map_wprod(self.mapping_params['theta_mu'], self.mapping_params['theta_v'], self.mapping_params['theta_dlam'], self.mapping_params['theta_iu'], w_coord.reshape(-1), self.mapping_params['inner_radius'], self.mapping_params['outer_polygon_prevertices'], self.mapping_params['inner_polygon_prevertices'], self.mapping_params['outer_polygon_turning_angles'], self.mapping_params['inner_polygon_turning_angles'])
+        return C*(wprod.reshape(orig_shape))
+
+    def dwdz(self, w_coord):
+        return 1/self.dzdw(w_coord)
+
+    def _wprod_derivative(self, w_coord):
+        pass
+    
+    def d2zdw2(self, w_coord):
+        pass
         
 
     def test_map(self):

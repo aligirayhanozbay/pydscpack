@@ -184,6 +184,41 @@ C     ..
       RETURN
 
       END
+C   --------------------------------------------
+      SUBROUTINE MAP_WPROD(UARY,VARY,DLAM,IU,W,M,N,U,W0,W1,ALFA0,ALFA1,
+     + NW, WPOUT)
+C   --------------------------------------------
+C    COMPUTE WPROD ON ALL ELEMENTS OF W WITH OMP
+C     .. Scalar Arguments ..
+      DOUBLE PRECISION U
+      INTEGER M,N,NW
+C     ..
+C     .. Array Arguments ..
+      DOUBLE COMPLEX, INTENT(IN) :: W(NW),W0(M),W1(N)
+      DOUBLE COMPLEX, INTENT(OUT) :: WPOUT(NW)
+      DOUBLE PRECISION, INTENT(IN) :: ALFA0(M),ALFA1(N)
+C     ..
+C     .. Scalars in Common ..
+      DOUBLE PRECISION DLAM
+      INTEGER IU
+C     ..
+C     .. Arrays in Common ..
+      DOUBLE PRECISION UARY(8),VARY(3)
+C     ..
+C     .. Local Scalars ..
+      INTEGER K
+C     ..
+C     .. External Functions ..
+      DOUBLE COMPLEX WPROD
+      EXTERNAL WPROD
+
+!$OMP PARALLEL DO
+      DO K = 1,NW
+         WPOUT(K) = WPROD(UARY,VARY,DLAM,IU,W(K),M
+     +        ,N,U,W0,W1,ALFA0,ALFA1)
+      END DO
+      
+      END
 C    ----------------------------------------------
       SUBROUTINE QINIT(M,N,ALFA0,ALFA1,NPTQ,QWORK)
 C    ----------------------------------------------
