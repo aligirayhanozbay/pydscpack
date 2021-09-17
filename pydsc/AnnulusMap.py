@@ -281,8 +281,15 @@ class AnnulusMap:
         
         
     
-    def d2zdw2(self, w_coord):
-        pass
+    def d2zdw2(self, w_coord, series_terms = 8):
+        C = self.mapping_params['scaling']
+        wprod_prime = self._wprod_derivative(w_coord, series_terms)
+        return C * wprod_prime
+
+    def d2wdz2(self, w_coord, series_terms = 8):
+        d2zdw2 = self.d2zdw2(w_coord, series_terms)
+        dzdw = self.dzdw(w_coord)
+        return -d2zdw2/(dzdw**3)
         
 
     def test_map(self):
