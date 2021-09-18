@@ -210,10 +210,26 @@ class AnnulusMap:
     def dwdz(self, w_coord):
         return 1/self.dzdw(w_coord)
 
+    def _dzdw_wproddebug(self, w_coord):
+        #this should yield the same result as self.dzdw!
+        orig_shape = list(w_coord.shape)
+        w_coord = w_coord.reshape(-1)
+        
+        sigma_outer, _ = self._sigma_outer(w_coord, 8)
+        
+        sigma_inner, _ = self._sigma_inner(w_coord, 8)
+        
+        res = self.mapping_params['scaling'] * np.prod(sigma_outer, axis=0) * np.prod(sigma_inner, axis=0)
+
+        return res.reshape(orig_shape)
+
+    def _dwdz_wproddebug(self, w_coord):
+        return 1/self._dzdw_wproddebug(w_coord)
+
     def _sigma_outer(self, w_coord, series_terms = 8):
         #assume w_coord is 1 dimensional
         npts = w_coord.shape[0]
-        j = np.arange(series_terms)
+        j = np.arange(1,series_terms+1)
         mu = self.mapping_params['inner_radius']
         M = len(self.mapping_params['outer_polygon_prevertices'])
         a0 = self.mapping_params['outer_polygon_turning_angles']
@@ -224,12 +240,9 @@ class AnnulusMap:
         wk = np.tile(wk.reshape(-1,1,1),(1,series_terms,npts))
         a0 = np.tile(a0.reshape(-1,1),(1,npts))
 
-        #sigma_outer = (mu**(j**2)*((-w/(mu*wk))**j + (-w/(mu*wk))**(-j)))**(a0 - 1)
-        #sigma_outer_deriv = sigma_outer * (a0 - 1)*(j*(-w/(mu*wk))**j/w - j*(-w/(mu*wk))**(-j)/w)/((-w/(mu*wk))**j + (-w/(mu*wk))**(-j))
-
         sigma_outer_term_sum = np.sum(mu**(j**2)*((-w/(mu*wk))**j + (-w/(mu*wk))**(-j)), axis=1)
         sigma_outer_prime_term_sum = np.sum(mu**(j**2)*(j*(-w/(mu*wk))**j/w - j*(-w/(mu*wk))**(-j)/w), axis=1)
-
+        
         sigma_outer = 1+sigma_outer_term_sum
         sigma_outer_derivs = (a0-1)*(sigma_outer**(a0-2))*(sigma_outer_prime_term_sum)
         sigma_outer = sigma_outer**(a0-1)
@@ -239,7 +252,7 @@ class AnnulusMap:
     def _sigma_inner(self, w_coord, series_terms = 8):
         #assume w_coord is 1 dimensional
         npts = w_coord.shape[0]
-        j = np.arange(series_terms)
+        j = np.arange(1,series_terms+1)
         mu = self.mapping_params['inner_radius']
         N = len(self.mapping_params['inner_polygon_prevertices'])
         a1 = self.mapping_params['inner_polygon_turning_angles']
@@ -249,9 +262,6 @@ class AnnulusMap:
         j = np.tile(j.reshape(1,-1,1),(N,1,npts))
         wk = np.tile(wk.reshape(-1,1,1),(1,series_terms,npts))
         a1 = np.tile(a1.reshape(-1,1),(1,npts))
-
-        #sigma_inner = (mu**(j**2)*((-mu*w/wk)**j + (-mu*w/wk)**(-j)))**(a1 - 1)
-        #sigma_inner_deriv = sigma_inner * (a1 - 1)*(j*(-mu*w/wk)**j/w - j*(-mu*w/wk)**(-j)/w)/((-mu*w/wk)**j + (-mu*w/wk)**(-j))
 
         sigma_inner_term_sum = np.sum(mu**(j**2)*((-mu*w/wk)**j + (-mu*w/wk)**(-j)),axis=1)
         sigma_inner_prime_term_sum = np.sum(mu**(j**2)*(j*(-mu*w/wk)**j/w - j*(-mu*w/wk)**(-j)/w),axis=1)
@@ -266,19 +276,19 @@ class AnnulusMap:
 
         orig_shape = list(w_coord.shape)
         w_coord = w_coord.reshape(-1)
-        
-        sigma_outer, sigma_outer_deriv = self._sigma_outer(w_coord, series_terms)
-        outer_derivative_mask = np.eye(sigma_outer_deriv.shape[0])
-        
-        sigma_inner, sigma_inner_deriv = self._sigma_inner(w_coord, series_terms)
-        inner_derivative_mask = np.eye(sigma_inner_deriv.shape[0])
 
-        term1 = np.prod(sigma_inner,axis=0)*np.einsum('ab,bk,ac,ck->k',outer_derivative_mask,sigma_outer_deriv,1-outer_derivative_mask,sigma_outer)
-        term2 = np.prod(sigma_inner,axis=0)*np.einsum('ab,bk,ac,ck->k',inner_derivative_mask,sigma_inner_deriv,1-inner_derivative_mask,sigma_inner)
+        sigma_outer = np.stack(self._sigma_outer(w_coord, series_terms),0)
+        outer_derivative_mask = np.eye(sigma_outer.shape[1], dtype=np.int64)
+        outer_derivative_mask = np.stack([1-outer_derivative_mask,outer_derivative_mask],0)
+        
+        sigma_inner = np.stack(self._sigma_inner(w_coord, series_terms),0)
+        inner_derivative_mask = np.eye(sigma_inner.shape[1], dtype=np.int64)
+        inner_derivative_mask = np.stack([1-inner_derivative_mask,inner_derivative_mask],0)
+
+        term1 = np.sum(np.prod(np.einsum('bjk, bkl-> jkl', outer_derivative_mask, sigma_outer), axis=1), axis=0) * np.prod(sigma_inner[0], axis=0)
+        term2 = np.sum(np.prod(np.einsum('bjk, bkl-> jkl', inner_derivative_mask, sigma_inner), axis=1), axis=0) * np.prod(sigma_outer[0], axis=0)
 
         return term1 + term2
-        
-        
         
     
     def d2zdw2(self, w_coord, series_terms = 8):
