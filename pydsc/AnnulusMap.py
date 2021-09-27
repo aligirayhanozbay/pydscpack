@@ -180,7 +180,7 @@ class AnnulusMap:
                             self.mapping_params['theta_iu']).reshape(orig_shape)
         return w
 
-    def _generate_annular_grid(self, npts=None, **map_params):
+    def _generate_annular_grid(self, n_pts=None, **map_params):
         '''
         Generates a grid of points, equispaced in the radial and angular directions on the annular domain (w-domain). Returns the coordinates in w and z domains.
 
@@ -191,8 +191,8 @@ class AnnulusMap:
         Outputs:
         Tuple[np.array] of dtype np.complex128. First element contains complex coordinates of the gridpoints in the w-domain and the second element in the z domain.
         '''
-        if npts is None:
-            npts = (50,200)
+        if n_pts is None:
+            n_pts = (50,200)
         r = np.linspace(self.mapping_params['inner_radius'],1.0-(1e-5),n_pts[0]) #important to not evaluate map at r=1.0 (outer annulus ring)
         theta = np.linspace(0,2*np.pi,n_pts[1],endpoint=False)
         a = np.exp(theta*1j)
@@ -341,7 +341,7 @@ class AnnulusMap:
         z_reals = []
         z_imags = []
         if w is None and z is None:
-            w,z = self._generate_annular_grid(npts=npts, **map_params)
+            w,z = self._generate_annular_grid(n_pts=n_pts, **map_params)
             w = itertools.repeat(w,len(fields))
             z = itertools.repeat(z,len(fields))
         elif w is not None and z is None:
@@ -404,6 +404,14 @@ class AnnulusMap:
             plt.savefig(save_path)
             
         plt.close()
+
+    def export_mapping_params_h5(self, dataset):
+        import h5py
+        if isinstance(dataset, str):
+            dataset = h5py.File(dataset,'w')
+
+        for val_name in self.mapping_params:
+            dataset.create_dataset(val_name, data = self.mapping_params[val_name])
         
         
 
@@ -416,3 +424,8 @@ if __name__ == '__main__':
 
     print(amap.test_map())
     amap.plot_map('norm', 'argument', save_path='/tmp/norm_and_argument.png')
+
+    import h5py
+    f = h5py.File('/tmp/test_amap.h5','w')
+    grp = f.create_group('test')
+    amap.export_mapping_params_h5(grp)
