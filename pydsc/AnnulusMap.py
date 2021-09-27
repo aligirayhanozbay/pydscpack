@@ -180,7 +180,7 @@ class AnnulusMap:
                             self.mapping_params['theta_iu']).reshape(orig_shape)
         return w
 
-    def _generate_annular_grid(self, n_pts=None, **map_params):
+    def _generate_annular_grid(self, n_pts=None, return_polar=False, **map_params):
         '''
         Generates a grid of points, equispaced in the radial and angular directions on the annular domain (w-domain). Returns the coordinates in w and z domains.
 
@@ -195,10 +195,13 @@ class AnnulusMap:
             n_pts = (50,200)
         r = np.linspace(self.mapping_params['inner_radius'],1.0-(1e-5),n_pts[0]) #important to not evaluate map at r=1.0 (outer annulus ring)
         theta = np.linspace(0,2*np.pi,n_pts[1],endpoint=False)
-        a = np.exp(theta*1j)
-        w = np.einsum('i,j->ij', r, a)
-        z = self.forward_map(w, **map_params)
-        return w,z
+        if return_polar:
+            return np.stack(np.meshgrid(r,theta,indexing='ij'),-1)
+        else:
+            a = np.exp(theta*1j)
+            w = np.einsum('i,j->ij', r, a)
+            z = self.forward_map(w, **map_params)
+            return w,z
 
     def dzdw(self, w_coord):
         #dz/dw = C * wprod(w) - read area around Eq 2.6 in Hu 1998
