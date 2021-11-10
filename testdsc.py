@@ -30,13 +30,13 @@ if __name__ == '__main__':
     ishape = 0 #0 for no vertices at infinity
     linearc = 1
 
-    outer_coords = 5*complexify(['1.5+1.5j', '-1.5+1.5j', '-1.5-1.5j', '1.5-1.5j']) #coordinates of the outer polygon
-    inner_coords = -1.0*complexify(['0.5', '-0.5+0.5j', '-0.5-0.5j']) #coordinates of the inner polygon
+    #outer_coords = 5*complexify(['1.5+1.5j', '-1.5+1.5j', '-1.5-1.5j', '1.5-1.5j']) #coordinates of the outer polygon
+    #inner_coords = -1.0*complexify(['0.5', '-0.5+0.5j', '-0.5-0.5j']) #coordinates of the inner polygon
 
-    #q = np.sqrt(2)
-    #q = 0.25
-    #outer_coords = 1.5*complexify(['1+j', '-1+j', '-1-j', '1-j']) #coordinates of the outer polygon
-    #inner_coords = complexify([f'{q}+0.0j', f'0.0+{q}j', f'-{q}+0.0j', f'0.0-{q}j']) #coordinates of the inner polygon
+    q = np.sqrt(2)
+    q = 0.25
+    outer_coords = 1.5*complexify(['1+j', '-1+j', '-1-j', '1-j']) #coordinates of the outer polygon
+    inner_coords = complexify([f'{q}+0.0j', f'0.0+{q}j', f'-{q}+0.0j', f'0.0-{q}j']) #coordinates of the inner polygon
     amap = pydsc.AnnulusMap(outer_coords, inner_coords)
     
     n_plotpts = (50,200)
