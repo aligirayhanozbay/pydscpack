@@ -309,7 +309,7 @@ class AnnulusMap:
     def test_map(self):
         return dsc.dsctest(self.mapping_params['theta_mu'], self.mapping_params['theta_v'], self.mapping_params['theta_dlam'], self.mapping_params['theta_iu'], self.mapping_params['inner_radius'], self.mapping_params['scaling'], self.mapping_params['outer_polygon_prevertices'], self.mapping_params['inner_polygon_prevertices'], self.mapping_params['outer_polygon_vertices'], self.mapping_params['inner_polygon_vertices'], self.mapping_params['outer_polygon_turning_angles'], self.mapping_params['inner_polygon_turning_angles'], self.mapping_params['gj_quadrature_points'], self.mapping_params['gj_quadrature_params'])
 
-    def plot_map(self, *fields, w = None, z = None, xlim = None, ylim = None, draw_boundaries = True, save_path = None, n_pts = None, plot_type = None, **map_params):
+    def plot_map(self, *fields, w = None, z = None, xlim = None, ylim = None, draw_boundaries = True, save_path = None, n_pts = None, plot_type = None, cmaps = None, **map_params):
         '''
         Plot quantities in both the annular (w-) and original (z-) coordinates.
 
@@ -327,7 +327,7 @@ class AnnulusMap:
             plot_type = ['contour' for _ in fields]
         elif isinstance(plot_type, str):
             plot_type = [plot_type for _ in fields]
-        plot_type_map = {'contour': lambda ax,x,y,f: ax.tricontour(x,y,f), 'contourf': lambda ax,x,y,f: ax.tricontourf(x,y,f), 'scatter': lambda ax,x,y,f: ax.scatter(x,y,c=f)}
+        plot_type_map = {'contour': lambda ax,x,y,f,**kwargs: ax.tricontour(x,y,f,**kwargs), 'contourf': lambda ax,x,y,f,**kwargs: ax.tricontourf(x,y,f,**kwargs), 'scatter': lambda ax,x,y,f,**kwargs: ax.scatter(x,y,c=f,**kwargs)}
         
         if len(fields) == 0:
             fields = ['norm', 'argument']
@@ -338,6 +338,9 @@ class AnnulusMap:
                     n_pts = field.shape
                 except:
                     n_pts = default_npts
+
+        if cmaps is None:
+            cmaps = [None for _ in fields]
         
         w_reals = []
         w_imags = []
@@ -372,26 +375,33 @@ class AnnulusMap:
             z_imags.append(zimag)
         
         plt.figure()
-        fig, (z_ax,w_ax) = plt.subplots(2)
-        
-        if draw_boundaries:
-            for obj_boundary in [self.mapping_params['outer_polygon_vertices'], self.mapping_params['inner_polygon_vertices']]:
-                for start, end in zip(obj_boundary, np.roll(obj_boundary,-1)):
-                    s_real, s_imag = np.real(start), np.imag(start)
-                    e_real, e_imag = np.real(end), np.imag(end)
-                    z_ax.plot([s_real, e_real], [s_imag,e_imag])
+        fig, (z_ax,w_ax) = plt.subplots(1,2)
                     
-        for field,ptype,zreal,zimag,wreal,wimag in zip(fields, plot_type, z_reals, z_imags, w_reals, w_imags):
+        for field,ptype,zreal,zimag,wreal,wimag,cmap in zip(fields, plot_type, z_reals, z_imags, w_reals, w_imags,cmaps):
             if isinstance(field, str):
                 if field == 'norm':
                     field = (wreal**2 + wimag**2)**0.5
                 elif field == 'argument':
                     field = np.angle(wreal + 1j*wimag)
-            plot_type_map[ptype](z_ax, zreal.reshape(-1), zimag.reshape(-1), field.reshape(-1))
-            plot_type_map[ptype](w_ax, wreal.reshape(-1), wimag.reshape(-1), field.reshape(-1))
+            plot_type_map[ptype](z_ax, zreal.reshape(-1), zimag.reshape(-1), field.reshape(-1),cmap=cmap)
+            plot_type_map[ptype](w_ax, wreal.reshape(-1), wimag.reshape(-1), field.reshape(-1),cmap=cmap)
             
-        w_ax.add_patch(plt.Circle((0,0), self.mapping_params['inner_radius'], edgecolor='k', fill=False))
+        w_ax.add_patch(plt.Circle((0,0), self.mapping_params['inner_radius'], edgecolor='k', fill=True, facecolor= 'purple'))
         w_ax.add_patch(plt.Circle((0,0), 1.0, edgecolor='k', fill=False))
+
+        if draw_boundaries:
+            opv = self.mapping_params['outer_polygon_vertices']
+            ipv = self.mapping_params['inner_polygon_vertices']
+            opv_real = np.stack([np.real(opv), np.imag(opv)], -1)
+            ipv_real = np.stack([np.real(ipv), np.imag(ipv)], -1)
+            z_ax.add_patch(plt.Polygon(opv_real, edgecolor='k', fill=False))
+            z_ax.add_patch(plt.Polygon(ipv_real, edgecolor='k', facecolor = 'purple', fill=True))
+            # for obj_boundary in [self.mapping_params['outer_polygon_vertices'], self.mapping_params['inner_polygon_vertices']]:
+            #     for start, end in zip(obj_boundary, np.roll(obj_boundary,-1)):
+            #         s_real, s_imag = np.real(start), np.imag(start)
+            #         e_real, e_imag = np.real(end), np.imag(end)
+            #         z_ax.plot([s_real, e_real], [s_imag,e_imag]
+            #                  )
 
         if xlim is not None:
             z_ax.set_xlim(*xlim)
