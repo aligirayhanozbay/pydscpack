@@ -16,6 +16,14 @@ C
 *               SOME FREE BOUNDARY AND VORTEX FLOWS.PH.D. DISS. 1995  *
 ***********************************************************************
 C
+C THIS SOURCE CODE HAS BEEN MODIFIED BY ALI GIRAYHAN OZBAY FOR
+C INTEGRATION INTO THE PYDSC BINDINGS FROM THE ORIGINAL. 
+C
+C THIS FILE IS DISTRIBUTED UNDER THE ACM SOFTWARE LICENSE
+C AGREEMENT FOR NONCOMMERCIAL PURPOSES:
+C https://www.acm.org/publications/policies/software-copyright-notice 
+C 
+C
 C    ----------------------
       SUBROUTINE THDATA(UARY,VARY,DLAM,IU,U)
 C    ----------------------
