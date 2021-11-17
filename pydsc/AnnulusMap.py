@@ -309,7 +309,17 @@ class AnnulusMap:
     def test_map(self):
         return dsc.dsctest(self.mapping_params['theta_mu'], self.mapping_params['theta_v'], self.mapping_params['theta_dlam'], self.mapping_params['theta_iu'], self.mapping_params['inner_radius'], self.mapping_params['scaling'], self.mapping_params['outer_polygon_prevertices'], self.mapping_params['inner_polygon_prevertices'], self.mapping_params['outer_polygon_vertices'], self.mapping_params['inner_polygon_vertices'], self.mapping_params['outer_polygon_turning_angles'], self.mapping_params['inner_polygon_turning_angles'], self.mapping_params['gj_quadrature_points'], self.mapping_params['gj_quadrature_params'])
 
-    def plot_map(self, *fields, w = None, z = None, xlim = None, ylim = None, draw_boundaries = True, save_path = None, n_pts = None, plot_type = None, cmaps = None, **map_params):
+    def plot_map(self, *fields,
+                 w = None,
+                 z = None,
+                 xlim = None,
+                 ylim = None,
+                 draw_boundaries = True,
+                 save_path = None,
+                 n_pts = None,
+                 plot_type = None,
+                 cmaps = None,
+                 plot_alignment=None, **map_params):
         '''
         Plot quantities in both the annular (w-) and original (z-) coordinates.
 
@@ -317,9 +327,12 @@ class AnnulusMap:
         -fields: List[Union[np.array, str]]. Fields to plot. If str, 
         -w: np.array. Locations of the data points in fields in w-coordinates.
         -z: np.array. Locations of the data points in fields in z-coordinates. Do not specify w and z simultaneously.
-        -draw_boundaries: bool. True to enable drawing of the vertices.
+        -draw_boundaries: bool. True to enable drawing of the bounding polygons.
         -save_path: str. Directory to save the output in.
         -n_pts: Tuple[int]. In case w and z are not supplied, this argument may be used to specify the number of gridpoints in radial and angular dimensions in the w-plane.
+        -plot_type: str. 'contour', 'contourf' or 'scatter'.
+        -cmaps: str or List[str]. matplotlib colormaps.
+        -plot_alignment: str. 'horizontal' or 'vertical'. How the output subplots are aligned.
         -map_params: Dict. Additional params to supply to self.forward_map/self.backward_map.
         '''
         
@@ -375,8 +388,14 @@ class AnnulusMap:
             z_imags.append(zimag)
         
         plt.figure()
-        fig, (z_ax,w_ax) = plt.subplots(1,2)
-                    
+        if ((plot_alignment is None) or (plot_alignment=='horizontal')):
+            subplot_partitioning = [1,2]
+        elif (plot_alignment=='vertical'):
+            subplot_partitioning = [2]
+        else:
+            raise(ValueError(f'Invalid plot alignment {plot_alignment}'))
+        fig, (z_ax,w_ax) = plt.subplots(*subplot_partitioning)
+
         for field,ptype,zreal,zimag,wreal,wimag,cmap in zip(fields, plot_type, z_reals, z_imags, w_reals, w_imags,cmaps):
             if isinstance(field, str):
                 if field == 'norm':
@@ -386,7 +405,7 @@ class AnnulusMap:
             plot_type_map[ptype](z_ax, zreal.reshape(-1), zimag.reshape(-1), field.reshape(-1),cmap=cmap)
             plot_type_map[ptype](w_ax, wreal.reshape(-1), wimag.reshape(-1), field.reshape(-1),cmap=cmap)
             
-        w_ax.add_patch(plt.Circle((0,0), self.mapping_params['inner_radius'], edgecolor='k', fill=True, facecolor= 'purple'))
+        w_ax.add_patch(plt.Circle((0,0), self.mapping_params['inner_radius'], edgecolor='k', fill=True, facecolor= 'purple', zorder = 999))
         w_ax.add_patch(plt.Circle((0,0), 1.0, edgecolor='k', fill=False))
 
         if draw_boundaries:
@@ -394,8 +413,8 @@ class AnnulusMap:
             ipv = self.mapping_params['inner_polygon_vertices']
             opv_real = np.stack([np.real(opv), np.imag(opv)], -1)
             ipv_real = np.stack([np.real(ipv), np.imag(ipv)], -1)
-            z_ax.add_patch(plt.Polygon(opv_real, edgecolor='k', fill=False))
-            z_ax.add_patch(plt.Polygon(ipv_real, edgecolor='k', facecolor = 'purple', fill=True))
+            z_ax.add_patch(plt.Polygon(opv_real, edgecolor='k', fill=False, zorder = 999))
+            z_ax.add_patch(plt.Polygon(ipv_real, edgecolor='k', facecolor = 'purple', fill=True, zorder=999))
             # for obj_boundary in [self.mapping_params['outer_polygon_vertices'], self.mapping_params['inner_polygon_vertices']]:
             #     for start, end in zip(obj_boundary, np.roll(obj_boundary,-1)):
             #         s_real, s_imag = np.real(start), np.imag(start)
@@ -414,7 +433,7 @@ class AnnulusMap:
         if save_path is None:
             plt.show()
         else:
-            plt.savefig(save_path)
+            plt.savefig(save_path, bbox_inches='tight')
             
         plt.close()
 
