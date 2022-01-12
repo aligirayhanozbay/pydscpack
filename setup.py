@@ -26,6 +26,15 @@ if __name__ == '__main__':
         from numpy.distutils.core import setup
         setup(
                 name=pkg_name,
+                version='0.0.1',
+                author='Ali Girayhan Ozbay',
+                url='https://github.com/aligirayhanozbay/pydscpack',
+                classifiers=[
+                        'Programming Language :: Python :: 3',
+                        'Operating System :: Unix',
+                        'Programming Language :: Fortran', 
+                        'Topic :: Scientific/Engineering :: Mathematics'
+                ],
                 description='A python toolkit to compute doubly connected Schwarz-Christoffel mappings',
                 ext_modules=[dsc],
                 install_requires=['numpy', 'matplotlib']
