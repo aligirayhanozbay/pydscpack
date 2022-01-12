@@ -1,4 +1,4 @@
-import pydsc
+import pydscpack
 import numpy as np
 import matplotlib.pyplot as plt
 import multiprocessing
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     q = 0.25
     outer_coords = 1.5*complexify(['1+j', '-1+j', '-1-j', '1-j']) #coordinates of the outer polygon
     inner_coords = complexify([f'{q}+0.0j', f'0.0+{q}j', f'-{q}+0.0j', f'0.0-{q}j']) #coordinates of the inner polygon
-    amap = pydsc.AnnulusMap(outer_coords, inner_coords)
+    amap = pydscpack.AnnulusMap(outer_coords, inner_coords)
     
     n_plotpts = (50,200)
     r = np.linspace(amap.mapping_params['inner_radius'],1.0-(1e-5),n_plotpts[0]) #important to not evaluate map at r=1.0 (outer annulus ring)
