@@ -10,6 +10,6 @@ To get started, clone the repository and install with the package with `pip3 -e 
 
 `python3-dev python3-pip python3-numpy python3-matplotlib gfortran`
 
-For general usage, import `pydscpack.AnnulusMap` and supply the coordinates of the vertices of the inner and outer polygons bounding the doubly connected region. Note that in some cases, the mapping quality might be poor due to the limitations of the original algorithm.
+For general usage, import `pydscpack.AnnulusMap` and supply the coordinates of the vertices of the inner and outer polygons bounding the doubly connected region. Note that in some cases with default settings the mapping quality might be poor due to the limitations of the original algorithm, and adjustment of further mapping parameters may be necessary.
 
 NOTE: This project is licensed under the BSD 3-Clause license, except for pydscpack/Src/Dp/src.f, which is licensed under the [ACM Software License Agreement](https://www.acm.org/publications/policies/software-copyright-notice). This license permits redistribution, usage and modification free of charge ONLY FOR NONCOMMERCIAL PURPOSES. AUTHOR(S) ARE NOT LIABLE FOR ANY DAMAGES WHICH MAY RESULT FROM NONCOMPLIANCE WITH THE ACM SOFTWARE LICENSING AGREEMENT TERMS.
