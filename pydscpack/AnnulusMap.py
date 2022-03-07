@@ -395,6 +395,11 @@ class AnnulusMap:
         else:
             raise(ValueError(f'Invalid plot alignment {plot_alignment}'))
         fig, (z_ax,w_ax) = plt.subplots(*subplot_partitioning)
+        w_ax.set_xlabel('Re(w)')
+        w_ax.set_ylabel('Im(w)')
+        z_ax.set_xlabel('Re(z)')
+        z_ax.set_ylabel('Im(z)')
+        fig.tight_layout()
 
         for field,ptype,zreal,zimag,wreal,wimag,cmap in zip(fields, plot_type, z_reals, z_imags, w_reals, w_imags,cmaps):
             if isinstance(field, str):
@@ -415,12 +420,6 @@ class AnnulusMap:
             ipv_real = np.stack([np.real(ipv), np.imag(ipv)], -1)
             z_ax.add_patch(plt.Polygon(opv_real, edgecolor='k', fill=False, zorder = 999))
             z_ax.add_patch(plt.Polygon(ipv_real, edgecolor='k', facecolor = 'purple', fill=True, zorder=999))
-            # for obj_boundary in [self.mapping_params['outer_polygon_vertices'], self.mapping_params['inner_polygon_vertices']]:
-            #     for start, end in zip(obj_boundary, np.roll(obj_boundary,-1)):
-            #         s_real, s_imag = np.real(start), np.imag(start)
-            #         e_real, e_imag = np.real(end), np.imag(end)
-            #         z_ax.plot([s_real, e_real], [s_imag,e_imag]
-            #                  )
 
         if xlim is not None:
             z_ax.set_xlim(*xlim)
@@ -429,6 +428,7 @@ class AnnulusMap:
 
         w_ax.set_aspect('equal')
         z_ax.set_aspect('equal')
+        
 
         if save_path is None:
             plt.show()
