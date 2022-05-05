@@ -1,3 +1,5 @@
+![](readme.png)
+
 ### PyDSCPACK
 
 PyDSCPACK is a Python package to compute doubly connected Schwarz-Christoffel conformal mappings for polygonal domains, wrapping a modified version of the code originally written by Hu (1998):
