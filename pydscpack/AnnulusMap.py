@@ -65,7 +65,7 @@ class AnnulusMap:
         dsc.check(turning_angles_outer, turning_angles_inner, vertices_at_infinity)
 
         #compute mapping
-        u,c,w0,w1,phi0,phi1,uary,vary,dlam,iu,isprt,icount = dsc.dscsolv(tol, initial_guess, outer_polygon, inner_polygon, turning_angles_outer, turning_angles_inner, nptq, gj_quadrature_params, vertices_at_infinity, integration_path)
+        u,c,w0,w1,phi0,phi1,uary,vary,dlam,iu,isprt,icount = dsc.dscsolv(tol, initial_guess, outer_polygon, inner_polygon, turning_angles_outer, turning_angles_inner, gj_quadrature_params, vertices_at_infinity, integration_path, nptq=nptq)
 
         #adjustments for inner radius of annulus
         dsc.thdata(uary,vary,dlam,iu,u)
@@ -114,8 +114,8 @@ class AnnulusMap:
             self.mapping_params['inner_polygon_vertices'],
             self.mapping_params['outer_polygon_turning_angles'],
             self.mapping_params['inner_polygon_turning_angles'],
-            self.mapping_params['gj_quadrature_points'],
-            self.mapping_params['gj_quadrature_params'])
+            self.mapping_params['gj_quadrature_params'],
+            nptq=self.mapping_params['gj_quadrature_points'])
             
 
     def forward_map(self, w, kww=0, ic=2, line_segment_only=False):
