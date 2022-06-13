@@ -140,13 +140,13 @@ class AnnulusMap:
                             self.mapping_params['inner_polygon_turning_angles'],
                             self.mapping_params['outer_prevertex_arguments'],
                             self.mapping_params['inner_prevertex_arguments'],
-                            self.mapping_params['gj_quadrature_points'],
                             self.mapping_params['gj_quadrature_params'],
                             int(not line_segment_only),
                             self.mapping_params['theta_mu'],
                             self.mapping_params['theta_v'],
                             self.mapping_params['theta_dlam'],
-                            self.mapping_params['theta_iu']).reshape(orig_shape)
+                            self.mapping_params['theta_iu'],
+                            nptq=self.mapping_params['gj_quadrature_points']).reshape(orig_shape)
         return z
 
     def backward_map(self, z, eps=1e-8, line_segment_only=False):
@@ -171,13 +171,13 @@ class AnnulusMap:
                             self.mapping_params['inner_polygon_turning_angles'],
                             self.mapping_params['outer_prevertex_arguments'],
                             self.mapping_params['inner_prevertex_arguments'],
-                            self.mapping_params['gj_quadrature_points'],
                             self.mapping_params['gj_quadrature_params'],
                             eps, int(not line_segment_only),
                             self.mapping_params['theta_mu'],
                             self.mapping_params['theta_v'],
                             self.mapping_params['theta_dlam'],
-                            self.mapping_params['theta_iu']).reshape(orig_shape)
+                            self.mapping_params['theta_iu'],
+                            nptq=self.mapping_params['gj_quadrature_points']).reshape(orig_shape)
         return w
 
     def _generate_annular_grid(self, n_pts=None, return_polar=False, **map_params):
@@ -307,7 +307,20 @@ class AnnulusMap:
         
 
     def test_map(self):
-        return dsc.dsctest(self.mapping_params['theta_mu'], self.mapping_params['theta_v'], self.mapping_params['theta_dlam'], self.mapping_params['theta_iu'], self.mapping_params['inner_radius'], self.mapping_params['scaling'], self.mapping_params['outer_polygon_prevertices'], self.mapping_params['inner_polygon_prevertices'], self.mapping_params['outer_polygon_vertices'], self.mapping_params['inner_polygon_vertices'], self.mapping_params['outer_polygon_turning_angles'], self.mapping_params['inner_polygon_turning_angles'], self.mapping_params['gj_quadrature_points'], self.mapping_params['gj_quadrature_params'])
+        return dsc.dsctest(
+            self.mapping_params['theta_mu'],
+            self.mapping_params['theta_v'],
+            self.mapping_params['theta_dlam'],
+            self.mapping_params['theta_iu'],
+            self.mapping_params['inner_radius'], self.mapping_params['scaling'],
+            self.mapping_params['outer_polygon_prevertices'],
+            self.mapping_params['inner_polygon_prevertices'],
+            self.mapping_params['outer_polygon_vertices'],
+            self.mapping_params['inner_polygon_vertices'],
+            self.mapping_params['outer_polygon_turning_angles'],
+            self.mapping_params['inner_polygon_turning_angles'],
+            self.mapping_params['gj_quadrature_params'],
+            nptq=self.mapping_params['gj_quadrature_points'])
 
     def plot_map(self, *fields,
                  w = None,
