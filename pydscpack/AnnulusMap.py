@@ -55,20 +55,29 @@ class AnnulusMap:
             
 
         #compute turning angles
-        turning_angles_outer = dsc.angles(outer_polygon, 0)
-        turning_angles_inner = dsc.angles(inner_polygon, 1)
+        turning_angles_outer = dsc.angles(z01=outer_polygon, i01=0)
+        turning_angles_inner = dsc.angles(z01=inner_polygon, i01=1)
 
         #compute Gauss-Jacobi quadrature points
-        gj_quadrature_params = dsc.qinit(turning_angles_outer, turning_angles_inner, nptq)
+        gj_quadrature_params = dsc.qinit(alfa0=turning_angles_outer, alfa1=turning_angles_inner, nptq=nptq)
 
         #check inputs
-        dsc.check(turning_angles_outer, turning_angles_inner, vertices_at_infinity)
+        dsc.check(alfa0=turning_angles_outer, alfa1=turning_angles_inner, ishape=vertices_at_infinity)
 
         #compute mapping
-        u,c,w0,w1,phi0,phi1,uary,vary,dlam,iu,isprt,icount = dsc.dscsolv(tol, initial_guess, outer_polygon, inner_polygon, turning_angles_outer, turning_angles_inner, gj_quadrature_params, vertices_at_infinity, integration_path, nptq=nptq)
+        u,c,w0,w1,phi0,phi1,uary,vary,dlam,iu,isprt,icount = dsc.dscsolv(tol=tol, 
+                                                                         iguess=initial_guess, 
+                                                                         z0=outer_polygon, 
+                                                                         z1=inner_polygon, 
+                                                                         alfa0=turning_angles_outer, 
+                                                                         alfa1=turning_angles_inner, 
+                                                                         qwork=gj_quadrature_params, 
+                                                                         ishape=vertices_at_infinity, 
+                                                                         linearc=integration_path, 
+                                                                         nptq=nptq)
 
         #adjustments for inner radius of annulus
-        dsc.thdata(uary,vary,dlam,iu,u)
+        dsc.thdata(uary=uary,vary=vary,dlam=dlam,iu=iu,u=u)
 
         return self._pack_mapping_params(u,c,outer_polygon,inner_polygon,w0,w1,turning_angles_outer,turning_angles_inner,nptq,gj_quadrature_params,phi0,phi1,uary,vary,dlam,iu)
 
@@ -102,19 +111,19 @@ class AnnulusMap:
 
     def check_map(self):
         #test mapping
-        dsc.dsctest(self.mapping_params['theta_mu'], \
-            self.mapping_params['theta_v'],
-            self.mapping_params['theta_dlam'],
-            self.mapping_params['theta_iu'],
-            self.mapping_params['inner_radius'],
-            self.mapping_params['scaling'],
-            self.mapping_params['outer_polygon_prevertices'],
-            self.mapping_params['inner_polygon_prevertices'],
-            self.mapping_params['outer_polygon_vertices'],
-            self.mapping_params['inner_polygon_vertices'],
-            self.mapping_params['outer_polygon_turning_angles'],
-            self.mapping_params['inner_polygon_turning_angles'],
-            self.mapping_params['gj_quadrature_params'],
+        dsc.dsctest(uary=self.mapping_params['theta_mu'],
+            vary=self.mapping_params['theta_v'],
+            dlam=self.mapping_params['theta_dlam'],
+            iu=self.mapping_params['theta_iu'],
+            u=self.mapping_params['inner_radius'],
+            c=self.mapping_params['scaling'],
+            w0=self.mapping_params['outer_polygon_prevertices'],
+            w1=self.mapping_params['inner_polygon_prevertices'],
+            z0=self.mapping_params['outer_polygon_vertices'],
+            z1=self.mapping_params['inner_polygon_vertices'],
+            alfa0=self.mapping_params['outer_polygon_turning_angles'],
+            alfa1=self.mapping_params['inner_polygon_turning_angles'],
+            qwork=self.mapping_params['gj_quadrature_params'],
             nptq=self.mapping_params['gj_quadrature_points'])
             
 
@@ -129,23 +138,23 @@ class AnnulusMap:
         -z: np.array[np.complex128]. Coordinates corresponding to each element of w in the polygonal domain.
         '''
         orig_shape = w.shape
-        z = dsc.forward_map(w.reshape(-1), kww, ic,
-                            self.mapping_params['inner_radius'],
-                            self.mapping_params['scaling'],
-                            self.mapping_params['outer_polygon_prevertices'],
-                            self.mapping_params['inner_polygon_prevertices'],
-                            self.mapping_params['outer_polygon_vertices'],
-                            self.mapping_params['inner_polygon_vertices'],
-                            self.mapping_params['outer_polygon_turning_angles'],
-                            self.mapping_params['inner_polygon_turning_angles'],
-                            self.mapping_params['outer_prevertex_arguments'],
-                            self.mapping_params['inner_prevertex_arguments'],
-                            self.mapping_params['gj_quadrature_params'],
-                            int(not line_segment_only),
-                            self.mapping_params['theta_mu'],
-                            self.mapping_params['theta_v'],
-                            self.mapping_params['theta_dlam'],
-                            self.mapping_params['theta_iu'],
+        z = dsc.forward_map(ww=w.reshape(-1), kww=kww, ic=ic,
+                            u=self.mapping_params['inner_radius'],
+                            c=self.mapping_params['scaling'],
+                            w0=self.mapping_params['outer_polygon_prevertices'],
+                            w1=self.mapping_params['inner_polygon_prevertices'],
+                            z0=self.mapping_params['outer_polygon_vertices'],
+                            z1=self.mapping_params['inner_polygon_vertices'],
+                            alfa0=self.mapping_params['outer_polygon_turning_angles'],
+                            alfa1=self.mapping_params['inner_polygon_turning_angles'],
+                            phi0=self.mapping_params['outer_prevertex_arguments'],
+                            phi1=self.mapping_params['inner_prevertex_arguments'],
+                            qwork=self.mapping_params['gj_quadrature_params'],
+                            iopt=int(not line_segment_only),
+                            uary=self.mapping_params['theta_mu'],
+                            vary=self.mapping_params['theta_v'],
+                            dlam=self.mapping_params['theta_dlam'],
+                            iu=self.mapping_params['theta_iu'],
                             nptq=self.mapping_params['gj_quadrature_points']).reshape(orig_shape)
         return z
 
@@ -160,23 +169,23 @@ class AnnulusMap:
         -w: np.array[np.complex128]. Coordinates corresponding to each element of z in the annular domain.
         '''
         orig_shape = z.shape
-        w = dsc.backward_map(z.reshape(-1),
-                            self.mapping_params['inner_radius'],
-                            self.mapping_params['scaling'],
-                            self.mapping_params['outer_polygon_prevertices'],
-                            self.mapping_params['inner_polygon_prevertices'],
-                            self.mapping_params['outer_polygon_vertices'],
-                            self.mapping_params['inner_polygon_vertices'],
-                            self.mapping_params['outer_polygon_turning_angles'],
-                            self.mapping_params['inner_polygon_turning_angles'],
-                            self.mapping_params['outer_prevertex_arguments'],
-                            self.mapping_params['inner_prevertex_arguments'],
-                            self.mapping_params['gj_quadrature_params'],
-                            eps, int(not line_segment_only),
-                            self.mapping_params['theta_mu'],
-                            self.mapping_params['theta_v'],
-                            self.mapping_params['theta_dlam'],
-                            self.mapping_params['theta_iu'],
+        w = dsc.backward_map(zz=z.reshape(-1),
+                            u=self.mapping_params['inner_radius'],
+                            c=self.mapping_params['scaling'],
+                            w0=self.mapping_params['outer_polygon_prevertices'],
+                            w1=self.mapping_params['inner_polygon_prevertices'],
+                            z0=self.mapping_params['outer_polygon_vertices'],
+                            z1=self.mapping_params['inner_polygon_vertices'],
+                            alfa0=self.mapping_params['outer_polygon_turning_angles'],
+                            alfa1=self.mapping_params['inner_polygon_turning_angles'],
+                            phi0=self.mapping_params['outer_prevertex_arguments'],
+                            phi1=self.mapping_params['inner_prevertex_arguments'],
+                            qwork=self.mapping_params['gj_quadrature_params'],
+                            eps=eps, iopt=int(not line_segment_only),
+                            uary=self.mapping_params['theta_mu'],
+                            vary=self.mapping_params['theta_v'],
+                            dlam=self.mapping_params['theta_dlam'],
+                            iu=self.mapping_params['theta_iu'],
                             nptq=self.mapping_params['gj_quadrature_points']).reshape(orig_shape)
         return w
 
@@ -207,7 +216,18 @@ class AnnulusMap:
         #dz/dw = C * wprod(w) - read area around Eq 2.6 in Hu 1998
         orig_shape = w_coord.shape
         C = self.mapping_params['scaling']
-        wprod = dsc.map_wprod(self.mapping_params['theta_mu'], self.mapping_params['theta_v'], self.mapping_params['theta_dlam'], self.mapping_params['theta_iu'], w_coord.reshape(-1), self.mapping_params['inner_radius'], self.mapping_params['outer_polygon_prevertices'], self.mapping_params['inner_polygon_prevertices'], self.mapping_params['outer_polygon_turning_angles'], self.mapping_params['inner_polygon_turning_angles'])
+        
+        wprod = dsc.map_wprod(uary=self.mapping_params['theta_mu'], 
+                              vary=self.mapping_params['theta_v'], 
+                              dlam=self.mapping_params['theta_dlam'], 
+                              iu=self.mapping_params['theta_iu'], 
+                              w=w_coord.reshape(-1), 
+                              u=self.mapping_params['inner_radius'], 
+                              w0=self.mapping_params['outer_polygon_prevertices'], 
+                              w1=self.mapping_params['inner_polygon_prevertices'], 
+                              alfa0=self.mapping_params['outer_polygon_turning_angles'], 
+                              alfa1=self.mapping_params['inner_polygon_turning_angles'])
+        
         return C*(wprod.reshape(orig_shape))
 
     def dwdz(self, w_coord):
@@ -307,19 +327,19 @@ class AnnulusMap:
         
 
     def test_map(self):
-        return dsc.dsctest(
-            self.mapping_params['theta_mu'],
-            self.mapping_params['theta_v'],
-            self.mapping_params['theta_dlam'],
-            self.mapping_params['theta_iu'],
-            self.mapping_params['inner_radius'], self.mapping_params['scaling'],
-            self.mapping_params['outer_polygon_prevertices'],
-            self.mapping_params['inner_polygon_prevertices'],
-            self.mapping_params['outer_polygon_vertices'],
-            self.mapping_params['inner_polygon_vertices'],
-            self.mapping_params['outer_polygon_turning_angles'],
-            self.mapping_params['inner_polygon_turning_angles'],
-            self.mapping_params['gj_quadrature_params'],
+        return dsc.dsctest(uary=self.mapping_params['theta_mu'],
+            vary=self.mapping_params['theta_v'],
+            dlam=self.mapping_params['theta_dlam'],
+            iu=self.mapping_params['theta_iu'],
+            u=self.mapping_params['inner_radius'], 
+            c=self.mapping_params['scaling'],
+            w0=self.mapping_params['outer_polygon_prevertices'],
+            w1=self.mapping_params['inner_polygon_prevertices'],
+            z0=self.mapping_params['outer_polygon_vertices'],
+            z1=self.mapping_params['inner_polygon_vertices'],
+            alfa0=self.mapping_params['outer_polygon_turning_angles'],
+            alfa1=self.mapping_params['inner_polygon_turning_angles'],
+            qwork=self.mapping_params['gj_quadrature_params'],
             nptq=self.mapping_params['gj_quadrature_points'])
 
     def plot_map(self, *fields,
